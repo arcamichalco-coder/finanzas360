@@ -876,7 +876,136 @@ function togSP(sId,pI){const s=db.serv_o.find(x=>x.id===sId);if(!s)return;const 
 function elimSO(id){db.serv_o=db.serv_o.filter(s=>s.id!==id);save();renderServs();}
 function elimSS(id){db.serv_s=db.serv_s.filter(s=>s.id!==id);save();renderServs();}
 
-function renderFijos(){const fijos=db.eventos.filter(e=>e.tipo==='fijo'),mes=getMes(),tot=fijos.reduce((s,e)=>s+e.monto,0),pag=fijos.filter(e=>e.pm[mes]).length;document.getElementById('fijos-s').innerHTML=`<div class="metric"><div class="ml">Total fijos</div><div class="mv cr">${fS(tot)}</div></div><div class="metric"><div class="ml">Pagados</div><div class="mv cg">${pag}/${fijos.length}</div></div><div class="metric"><div class="ml">Pendientes</div><div class="mv ca">${fijos.length-pag}</div></div>`;document.getElementById('fijos-list').innerHTML=fijos.length?fijos.sort((a,b)=>a.dia-b.dia).map(e=>{const paid=e.pm[mes],venc=e.dia<=new Date().getDate()&&!paid;return`<div class="card" style="${venc?'border-color:var(--red)':''}"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700">${e.nombre} ${venc?'⚠':''}</div><div style="font-size:12px;color:var(--text2)">Día ${e.dia} · ${e.resp}${e.monto?` · ${fS(e.monto)}`:''}</div>${e.nota?`<div style="font-size:11px;color:var(--text3)">📝 ${e.nota}</div>`:''}</div><div style="display:flex;gap:6px;align-items:center">${paid?`<span class="badge bg">✓ Pagado</span><button class="btn bxs bgh" onclick="mkPaid(${e.id},'${mes}',true)" style="color:var(--text3)">↩</button>`:`<button class="btn bp bsm" onclick="mkPaid(${e.id},'${mes}')">Registrar</button>`}<button class="btn bgh bxs" onclick="elimEv(${e.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button></div></div></div>`;}).join(''):'<div class="empty"><i class="ti ti-repeat"></i>Sin gastos fijos. Agrégalos desde Calendario.</div>';}
+  function toggleFijosForm(){
+  const f=document.getElementById('fijos-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+}
+
+function freqLabel(f){return{mensual:'Mensual',cada2:'Cada 2 meses',cada3:'Cada 3 meses',anual:'Anual'}[f]||f;}
+function freqMeses(f){return{mensual:1,cada2:2,cada3:3,anual:12}[f]||1;}
+function reservaMes(e){return e.monto/freqMeses(e.freq||'mensual');}
+
+function guardarFijo(){
+  const n=document.getElementById('nf-n').value.trim();
+  const m=parseFloat(document.getElementById('nf-m').value)||0;
+  const d=parseInt(document.getElementById('nf-d').value)||1;
+  if(!n||!m){toast('Completa nombre y monto');return;}
+  db.eventos.push({
+    id:Date.now(),nombre:n,tipo:'fijo',monto:m,dia:d,
+    resp:document.getElementById('nf-r').value,
+    cat:document.getElementById('nf-c').value||'General',
+    nota:document.getElementById('nf-nt').value,
+    pm:{},freq:document.getElementById('nf-f').value
+  });
+  save();
+  ['nf-n','nf-m','nf-d','nf-c','nf-nt'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nf-f').value='mensual';
+  document.getElementById('fijos-form').style.display='none';
+  renderFijos();renderCal();toast('✓ Gasto fijo guardado');
+}
+
+function editarFijo(id){
+  const e=db.eventos.find(x=>x.id===id);if(!e)return;
+  openMod(`<div class="mt2"><span>✏️ Editar gasto fijo</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div class="fg2">
+    <div class="fgrp"><label>Nombre</label><input type="text" id="ef-n" value="${e.nombre}"></div>
+    <div class="fgrp"><label>Monto (S/)</label><input type="number" id="ef-m" value="${e.monto}" step="0.01"></div>
+  </div>
+  <div class="fg3">
+    <div class="fgrp"><label>Día del mes</label><input type="number" id="ef-d" value="${e.dia}" min="1" max="31"></div>
+    <div class="fgrp"><label>Responsable</label>
+      <select id="ef-r">
+        <option${e.resp==='Camila'?' selected':''}>Camila</option>
+        <option${e.resp==='Mamá'?' selected':''}>Mamá</option>
+        <option${e.resp==='Compartido'?' selected':''}>Compartido</option>
+      </select>
+    </div>
+    <div class="fgrp"><label>Frecuencia</label>
+      <select id="ef-f">
+        <option value="mensual"${(e.freq||'mensual')==='mensual'?' selected':''}>Mensual</option>
+        <option value="cada2"${e.freq==='cada2'?' selected':''}>Cada 2 meses</option>
+        <option value="cada3"${e.freq==='cada3'?' selected':''}>Cada 3 meses</option>
+        <option value="anual"${e.freq==='anual'?' selected':''}>Anual</option>
+      </select>
+    </div>
+  </div>
+  <div class="fg2">
+    <div class="fgrp"><label>Categoría</label><input type="text" id="ef-c" value="${e.cat||''}"></div>
+    <div class="fgrp"><label>Nota</label><input type="text" id="ef-nt" value="${e.nota||''}"></div>
+  </div>
+  <button class="btn bp bfw" onclick="saveEF(${id})"><i class="ti ti-check"></i> Guardar cambios</button>`);
+}
+
+function saveEF(id){
+  const e=db.eventos.find(x=>x.id===id);if(!e)return;
+  e.nombre=document.getElementById('ef-n').value.trim()||e.nombre;
+  e.monto=parseFloat(document.getElementById('ef-m').value)||e.monto;
+  e.dia=parseInt(document.getElementById('ef-d').value)||e.dia;
+  e.resp=document.getElementById('ef-r').value;
+  e.freq=document.getElementById('ef-f').value;
+  e.cat=document.getElementById('ef-c').value;
+  e.nota=document.getElementById('ef-nt').value;
+  save();closeMN();renderFijos();renderCal();toast('✓ Actualizado');
+}
+
+function renderFijos(){
+  const fijos=db.eventos.filter(e=>e.tipo==='fijo');
+  const mes=getMes();
+  const hoy=new Date().getDate();
+
+  // Totales por persona
+  const totalMes=fijos.reduce((s,e)=>s+reservaMes(e),0);
+  const pagados=fijos.filter(e=>e.pm[mes]).length;
+  const vencidos=fijos.filter(e=>e.dia<=hoy&&!e.pm[mes]).length;
+
+  document.getElementById('fijos-s').innerHTML=`
+    <div class="metric"><div class="ml">Total mensual estimado</div><div class="mv cr">${fS(totalMes)}</div><div class="ms">incluye reservas de frecuencia</div></div>
+    <div class="metric"><div class="ml">Pagados este mes</div><div class="mv cg">${pagados}/${fijos.length}</div></div>
+    <div class="metric"><div class="ml">Vencidos sin pagar</div><div class="mv ${vencidos>0?'cr':'cg'}">${vencidos}</div></div>`;
+
+  // Agrupar por persona
+  const personas=[...new Set(fijos.map(e=>e.resp))].sort();
+  let html='';
+
+  personas.forEach(per=>{
+    const pFijos=fijos.filter(e=>e.resp===per).sort((a,b)=>a.dia-b.dia);
+    const pTotal=pFijos.reduce((s,e)=>s+reservaMes(e),0);
+    html+=`<div class="card">
+      <div class="ct">
+        <div class="ctl">${per==='Camila'?'💙':per==='Mamá'?'💚':'🤝'} ${per} <span style="font-size:12px;color:var(--text3);font-weight:400">— ${fS(pTotal)}/mes estimado</span></div>
+      </div>
+      ${pFijos.map(e=>{
+        const paid=e.pm[mes];
+        const venc=e.dia<=hoy&&!paid;
+        const reserva=reservaMes(e);
+        const esFreqExtra=e.freq&&e.freq!=='mensual';
+        return`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:.5px solid var(--border)">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-weight:600;font-size:13px">${e.nombre}</span>
+              ${venc?'<span class="badge br">Vencido</span>':''}
+              ${paid?'<span class="badge bg">✓ Pagado</span>':''}
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">
+              Día ${e.dia} · ${freqLabel(e.freq||'mensual')} · ${e.cat||''}
+              ${esFreqExtra?` · <span style="color:var(--amber)">Reservar ${fS(reserva)}/mes</span>`:''}
+              ${e.nota?` · ${e.nota}`:''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-weight:700;font-size:14px;color:var(--red)">${fS(e.monto)}</span>
+            ${!paid?`<button class="btn bp bxs" onclick="mkPaid(${e.id},'${mes}')">Pagar</button>`:`<button class="btn bgh bxs" onclick="mkPaid(${e.id},'${mes}',true)" style="color:var(--text3)">↩</button>`}
+            <button class="btn bgh bxs" onclick="editarFijo(${e.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button>
+            <button class="btn bgh bxs" onclick="elimEv(${e.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  if(!fijos.length)html='<div class="empty"><i class="ti ti-repeat"></i>Sin gastos fijos. Agrega uno arriba.</div>';
+  document.getElementById('fijos-list').innerHTML=html;
+}
 function mkPaid(id,mk,undo=false){const e=db.eventos.find(x=>x.id===id);if(!e)return;e.pm[mk]=!undo;if(!undo&&e.monto>0)db.movimientos.push({id:Date.now(),fecha:new Date().toISOString().split('T')[0],tipo:'gasto',persona:e.resp==='Ambas'?'Camila':e.resp,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Fijo registrado desde calendario'});save();renderFijos();renderCal();toast(undo?'Desmarcado':'✓ Registrado');}
 function elimEv(id){db.eventos=db.eventos.filter(e=>e.id!==id);save();renderFijos();renderCal();}
 
