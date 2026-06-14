@@ -429,12 +429,10 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- CONSULTORIO -->
 <div class="screen" id="screen-consultorio">
-  <!-- Nombre editable -->
-  <div class="card" style="margin-bottom:12px">
-    <div class="ct">
-      <div class="ctl"><i class="ti ti-building"></i><span id="fuente-nombre-lbl">Tea Abrazo</span></div>
-      <button class="btn bgh bxs" onclick="editarNombreFuente()" style="color:var(--m1)"><i class="ti ti-pencil"></i> Editar nombre</button>
-    </div>
+  <!-- Pestañas por fuente -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+    <div id="fuentes-tabs" style="display:flex;gap:6px;flex-wrap:wrap;flex:1"></div>
+    <button class="btn bp bsm" onclick="openNuevaFuente()"><i class="ti ti-plus"></i> Nueva fuente</button>
   </div>
 
   <!-- Resumen del mes -->
@@ -446,6 +444,17 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <div class="hcard hc-l" style="margin:0">
       <div style="font-size:11px;opacity:0.85;margin-bottom:2px">ADELANTOS DEL MES</div>
       <div id="ta-adelantos" style="font-size:26px;font-weight:800">S/ 0.00</div>
+    </div>
+  </div>
+
+  <!-- Nombre fuente activa + acciones -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct">
+      <div class="ctl"><i class="ti ti-building"></i><span id="fuente-nombre-lbl">Tea Abrazo</span></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn bgh bxs" onclick="editarNombreFuente()" style="color:var(--m1)"><i class="ti ti-pencil"></i> Editar</button>
+        <button class="btn bgh bxs" onclick="eliminarFuente()" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>
     </div>
   </div>
 
@@ -552,8 +561,14 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- AGENDA -->
 <div class="screen" id="screen-agenda">
-  <div class="sec-h"><span class="sec-ht"><i class="ti ti-checklist"></i> Agenda financiera</span><button class="btn bp bsm" onclick="openNT()"><i class="ti ti-plus"></i></button></div>
-  <div class="tabs" style="margin-bottom:10px"><button class="tab active" id="ag-pend" onclick="setAT('pend')">Pendientes</button><button class="tab" id="ag-done" onclick="setAT('done')">Completadas</button></div>
+  <div class="sec-h">
+    <span class="sec-ht"><i class="ti ti-checklist"></i> Agenda financiera</span>
+    <button class="btn bp bsm" onclick="openNT()"><i class="ti ti-plus"></i> Nueva tarea</button>
+  </div>
+  <div class="tabs" style="margin-bottom:10px">
+    <button class="tab active" id="ag-pend" onclick="setAT('pend')">Pendientes</button>
+    <button class="tab" id="ag-done" onclick="setAT('done')">Completadas</button>
+  </div>
   <div class="card" id="agenda-list"></div>
 </div>
 
@@ -717,7 +732,7 @@ function renderDash(){
     <div class="hcard hc-r" style="margin:0"><div style="font-size:11px;opacity:0.7;margin-bottom:2px;color:var(--text2)">COMPROMETIDO</div><div style="font-size:24px;font-weight:800;color:var(--red)">${fS(comprometido)}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">Deudas + fijos pendientes</div></div>
     <div class="hcard hc-l" style="margin:0"><div style="font-size:11px;opacity:0.85;margin-bottom:2px">DISPONIBLE</div><div style="font-size:24px;font-weight:800">${fS(disponible)}</div><div style="font-size:11px;opacity:0.75;margin-top:2px">Puedes usar libremente</div></div>`;
   if(!db.cobros)db.cobros=[];
-  const cM=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+c.monto,0);
+  const cM=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+c.monto,0); // ↑ ya suma todas las fuentes automáticamente
   const cP=0;
   document.getElementById('dash-m').innerHTML=[
     {l:'Ingresos',v:fS(ing),c:'cg',s:'del mes'},{l:'Gastos',v:fS(gas),c:'cr',s:'del mes'},
@@ -746,7 +761,7 @@ function renderAlerts(){
   const venc=db.eventos.filter(e=>e.tipo==='fijo'&&e.dia<=dia&&!e.pm[getMes()]);
   if(venc.length)als.push({c:'al-e',t:`⏰ ${venc.length} gasto(s) fijo(s) vencido(s) sin registrar.`});
   if(comprometido>saldo*0.7&&saldo>0)als.push({c:'al-a',t:`🔒 El ${((comprometido/saldo)*100).toFixed(0)}% de tu saldo está comprometido.`});
-  if(sem==='v'&&!als.length)als.push({c:'al-g',t:'✨ ¡Finanzas saludables este mes! Vas bien.'});
+  if(sem==='v'&&!als.length)als.push({c:'al-g',t:'✨ ¡Finanzas saludables este mes! Vas bien.'}); const tareasHoy=db.tareas.filter(t=>{if(t.done||!t.fecha)return false;return t.fecha<=new Date().toISOString().split('T')[0];}); if(tareasHoy.length)als.push({c:'al-v',t:`📌 Tienes ${tareasHoy.length} tarea(s) pendiente(s) para hoy o vencidas.`});
   document.getElementById('g-alerts').innerHTML=als.slice(0,3).map(a=>`<div class="al ${a.c}"><span>${a.t}</span></div>`).join('');
 }
 let cG,cM2;
@@ -860,24 +875,72 @@ function elimP(id){db.prestamos=db.prestamos.filter(p=>p.id!==id);save();renderP
 function guardarFE(){const per=document.getElementById('fe-per').value,mn=parseFloat(document.getElementById('fe-mn').value)||0,mt=parseFloat(document.getElementById('fe-mt').value)||0;const ex=db.fe.find(f=>f.persona===per);if(ex){ex.monto=mn;ex.meta=mt;}else{db.fe.push({persona:per,monto:mn,meta:mt});}save();renderFE();toast('✓ Actualizado');}
 function renderFE(){const tot=db.fe.reduce((s,f)=>s+f.monto,0);const{gas}=calcMes(getMes());const mc=gas>0?(tot/gas).toFixed(1):0;document.getElementById('fe-tot').textContent=fS(tot);document.getElementById('fe-mes').textContent=`Cubre aprox. ${mc} mes(es) de gastos`;['Camila','Mamá'].forEach(per=>{const f=db.fe.find(x=>x.persona===per)||{monto:0,meta:1000};const pct=f.meta>0?Math.min(100,(f.monto/f.meta)*100):0;const fc=pct>=75?'pg':pct>=40?'pa':'pm';const k=per==='Camila'?'c':'m';document.getElementById(`fe-${k}`).innerHTML=`<div style="font-size:20px;font-weight:800;color:var(--m1)">${fS(f.monto)}</div><div class="prog"><div class="pf ${fc}" style="width:${pct.toFixed(0)}%"></div></div><div style="font-size:11px;color:var(--text3)">${pct.toFixed(0)}% de ${fS(f.meta)}</div>`;});}
 
-// ── TEA ABRAZO ─────────────────────────────────────────────────────────────
-function getNombreFuente(){return db.nombreFuente||'Tea Abrazo';}
+// ── TEA ABRAZO + MÚLTIPLES FUENTES ────────────────────────────────────────
+function initFuentes(){
+  if(!db.fuentes)db.fuentes=[{id:1,nombre:'Tea Abrazo'}];
+  if(!db.cobros)db.cobros=[];
+  if(!db.fuenteActiva)db.fuenteActiva=db.fuentes[0].id;
+}
+function getFuenteActiva(){
+  initFuentes();
+  return db.fuentes.find(f=>f.id===db.fuenteActiva)||db.fuentes[0];
+}
+function getNombreFuente(){
+  if(db.fuentes&&db.fuentes.length){
+    const f=getFuenteActiva();
+    return f?f.nombre:'Tea Abrazo';
+  }
+  return db.nombreFuente||'Tea Abrazo';
+}
+function renderFuentesTabs(){
+  initFuentes();
+  document.getElementById('fuentes-tabs').innerHTML=db.fuentes.map(f=>`
+    <button class="pb-btn ${f.id===db.fuenteActiva?'active':''}" onclick="setFuenteActiva(${f.id})">${f.nombre}</button>
+  `).join('');
+}
+function setFuenteActiva(id){
+  db.fuenteActiva=id;
+  save();
+  renderConsultorio();
+}
+function openNuevaFuente(){
+  openMod(`<div class="mt2"><span>➕ Nueva fuente de ingreso</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div class="fgrp"><label>Nombre</label><input type="text" id="nf-nombre" placeholder="Pacientes propios, Otro trabajo..."></div>
+  <button class="btn bp bfw" onclick="guardarNuevaFuente()"><i class="ti ti-check"></i> Crear fuente</button>`);
+}
+function guardarNuevaFuente(){
+  const n=document.getElementById('nf-nombre').value.trim();
+  if(!n){toast('Ingresa un nombre');return;}
+  initFuentes();
+  const nueva={id:Date.now(),nombre:n};
+  db.fuentes.push(nueva);
+  db.fuenteActiva=nueva.id;
+  save();closeMN();renderConsultorio();toast('✓ Fuente creada');
+}
 function editarNombreFuente(){
+  const f=getFuenteActiva();
   openMod(`<div class="mt2"><span>✏️ Editar nombre</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
-  <div class="fgrp"><label>Nombre de la fuente</label><input type="text" id="fn-n" value="${getNombreFuente()}"></div>
+  <div class="fgrp"><label>Nombre</label><input type="text" id="fn-n" value="${f.nombre}"></div>
   <button class="btn bp bfw" onclick="guardarNombreFuente()"><i class="ti ti-check"></i> Guardar</button>`);
 }
 function guardarNombreFuente(){
   const n=document.getElementById('fn-n').value.trim();
   if(!n){toast('Ingresa un nombre');return;}
-  db.nombreFuente=n;
-  save();
-  document.getElementById('fuente-nombre-lbl').textContent=n;
-  closeMN();toast('✓ Nombre actualizado');
+  getFuenteActiva().nombre=n;
+  save();closeMN();renderConsultorio();toast('✓ Nombre actualizado');
+}
+function eliminarFuente(){
+  initFuentes();
+  if(db.fuentes.length<=1){toast('Debe haber al menos una fuente');return;}
+  if(!confirm('¿Eliminar esta fuente y todos sus cobros?'))return;
+  db.cobros=db.cobros.filter(c=>c.fuenteId!==db.fuenteActiva);
+  db.fuentes=db.fuentes.filter(f=>f.id!==db.fuenteActiva);
+  db.fuenteActiva=db.fuentes[0].id;
+  save();renderConsultorio();toast('Fuente eliminada');
 }
 function openRegistrarCobro(id){
+  const fuenteId=db.fuenteActiva;
   const cobro=id?db.cobros.find(c=>c.id===id):null;
-  const pacs=cobro?JSON.stringify(cobro.pacientes):'[]';
   openMod(`<div class="mt2"><span>${cobro?'✏️ Editar cobro':'💰 Registrar cobro'}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
   <div class="fg2">
     <div class="fgrp"><label>Fecha del cobro</label><input type="date" id="co-fecha" value="${cobro?cobro.fecha:new Date().toISOString().split('T')[0]}"></div>
@@ -892,9 +955,7 @@ function openRegistrarCobro(id){
   <button class="btn bgh bsm" onclick="addPacCobro()" style="color:var(--m1);margin-bottom:10px"><i class="ti ti-plus"></i> Agregar paciente</button>
   <div class="fgrp"><label>Nota general</label><textarea id="co-nota" rows="2" placeholder="Observaciones...">${cobro?cobro.nota||'':''}</textarea></div>
   <button class="btn bp bfw" onclick="guardarCobro(${id||'null'})"><i class="ti ti-check"></i> ${cobro?'Guardar cambios':'Registrar cobro'}</button>`);
-  // Cargar pacientes si es edición
-  const initPacs=cobro?cobro.pacientes:[];
-  window._cobPacs=initPacs.length?[...initPacs]:[{nombre:'',nota:''}];
+  window._cobPacs=cobro&&cobro.pacientes?[...cobro.pacientes]:[{nombre:'',nota:''}];
   renderPacsCobro();
 }
 function renderPacsCobro(){
@@ -919,24 +980,23 @@ function guardarCobro(id){
   const fecha=document.getElementById('co-fecha').value;
   const monto=parseFloat(document.getElementById('co-monto').value)||0;
   if(!fecha||!monto){toast('Completa fecha y monto');return;}
+  initFuentes();
   const cobro={
     id:id||Date.now(),
-    fecha,
-    monto,
+    fuenteId:db.fuenteActiva,
+    fecha,monto,
     adelanto:document.getElementById('co-adelanto').checked,
     pacientes:window._cobPacs.filter(p=>p.nombre.trim()),
     nota:document.getElementById('co-nota').value.trim()
   };
   if(!db.cobros)db.cobros=[];
   if(id){const idx=db.cobros.findIndex(c=>c.id===id);if(idx>=0)db.cobros[idx]=cobro;}
-  else db.cobros.push(cobro);
-  // Registrar como ingreso en movimientos
-  if(!id){
+  else{
+    db.cobros.push(cobro);
     db.movimientos.push({
       id:Date.now()+1,fecha,tipo:'ingreso',persona:'Camila',
-      categoria:'Ingresos del mes',subcategoria:'Tea Abrazo',
-      monto,metodo:'Transferencia',pr:getNombreFuente(),
-      nt:cobro.nota||''
+      categoria:'Ingresos del mes',subcategoria:getNombreFuente(),
+      monto,metodo:'Transferencia',pr:getNombreFuente(),nt:cobro.nota||''
     });
   }
   save();closeMN();renderConsultorio();toast(id?'✓ Cobro actualizado':'✓ Cobro registrado');
@@ -947,22 +1007,23 @@ function eliminarCobro(id){
   save();renderConsultorio();toast('Cobro eliminado');
 }
 function renderConsultorio(){
-  if(!db.cobros)db.cobros=[];
-  if(!db.nombreFuente)db.nombreFuente='Tea Abrazo';
-  document.getElementById('fuente-nombre-lbl').textContent=db.nombreFuente;
+  initFuentes();
+  renderFuentesTabs();
+  const f=getFuenteActiva();
+  document.getElementById('fuente-nombre-lbl').textContent=f.nombre;
   const mes=getMes();
-  const cobMes=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes));
+  const cobMes=db.cobros.filter(c=>c.fuenteId===db.fuenteActiva&&c.fecha&&c.fecha.startsWith(mes));
   const totMes=cobMes.reduce((s,c)=>s+c.monto,0);
   const totAdel=cobMes.filter(c=>c.adelanto).reduce((s,c)=>s+c.monto,0);
   document.getElementById('ta-tot-mes').textContent=fS(totMes);
   document.getElementById('ta-adelantos').textContent=fS(totAdel);
   const el=document.getElementById('ta-lista-cobros');
-  if(!db.cobros.length){
+  const cobrosFuente=db.cobros.filter(c=>c.fuenteId===db.fuenteActiva);
+  if(!cobrosFuente.length){
     el.innerHTML='<div class="empty"><i class="ti ti-cash"></i>Sin cobros registrados aún</div>';return;
   }
-  // Agrupar por mes
   const porMes={};
-  db.cobros.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c=>{
+  cobrosFuente.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c=>{
     const m=c.fecha.substring(0,7);
     if(!porMes[m])porMes[m]=[];
     porMes[m].push(c);
@@ -997,20 +1058,6 @@ function renderConsultorio(){
     </div>`;
   }).join('');
 }
-  function renderPacs(){
-  const mes=getMes();const cM=ingCons(mes),cP=ingConsPend();
-  document.getElementById('cons-s').innerHTML=`<div class="metric"><div class="ml">Pacientes</div><div class="mv cp">${db.pacientes.length}</div></div><div class="metric"><div class="ml">Generado</div><div class="mv cg">${fS(cM)}</div></div><div class="metric"><div class="ml">Por generar</div><div class="mv cv">${fS(cP)}</div></div>`;
-  const el=document.getElementById('lista-pac');if(!db.pacientes.length){el.innerHTML='<div class="empty"><i class="ti ti-brain"></i>Sin pacientes</div>';return;}
-  el.innerHTML=db.pacientes.map(p=>{const sd=(p.sesiones||[]).filter(s=>s.estado==='realizada').length,st=p.totalSes||0,pct=st>0?(sd/st)*100:0;const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return`<div class="pac-card"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div><div style="font-weight:700;font-size:15px">${p.nombre}</div><div style="font-size:12px;color:var(--text2)">${p.tipo==='propio'?'💚 Propio · 100%':'🏥 Consultorio · '+(p.pct||50)+'%'} · ${fS(g)}/sesión</div></div><div style="text-align:right"><span class="badge ${p.activo?'bg':'ba'}">${p.activo?'Activo':'Inactivo'}</span><br><div style="display:flex;gap:4px;justify-content:flex-end;margin-top:4px"><button class="btn bgh bxs" onclick="openSes(${p.id})" style="color:var(--m1)"><i class="ti ti-list"></i> Sesiones</button><button class="btn bgh bxs" onclick="elimPac(${p.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button></div></div></div><div class="g3" style="font-size:12px;margin-bottom:8px"><div style="background:var(--m3);padding:8px;border-radius:8px"><div style="color:var(--text3)">Sesiones</div><div style="font-weight:700">${sd}/${st}</div></div><div style="background:var(--gbg);padding:8px;border-radius:8px"><div style="color:var(--text3)">Generado</div><div style="font-weight:700;color:var(--green)">${fS(sd*g)}</div></div><div style="background:var(--lbg);padding:8px;border-radius:8px"><div style="color:var(--text3)">Por generar</div><div style="font-weight:700;color:var(--lav)">${fS((st-sd)*g)}</div></div></div>${p.paq?`<div style="font-size:11px;color:var(--text3)">📦 ${p.paq}</div>`:''}<div class="prog"><div class="pf pg" style="width:${pct.toFixed(0)}%"></div></div></div>`;}).join('');}
-function openNP(){openMod(`<div class="mt2"><span>🧠 Nuevo paciente</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div class="fg2"><div class="fgrp"><label>Nombre</label><input type="text" id="np-n"></div><div class="fgrp"><label>Tipo</label><select id="np-tp"><option value="propio">Propio (100%)</option><option value="consultorio">Consultorio (%)</option></select></div></div><div class="fg2"><div class="fgrp"><label>Precio por sesión (S/)</label><input type="number" id="np-ps" placeholder="0.00" step="0.01"></div><div class="fgrp"><label>Tu porcentaje (%)</label><input type="number" id="np-pct" placeholder="50" value="50"></div></div><div class="fg2"><div class="fgrp"><label>Sesiones del paquete</label><input type="number" id="np-ts" placeholder="0"></div><div class="fgrp"><label>Nombre paquete</label><input type="text" id="np-pq" placeholder="Paquete 8 ses..."></div></div><div class="fgrp"><label>Observaciones</label><input type="text" id="np-ob"></div><button class="btn bp bfw" onclick="guardarPac()"><i class="ti ti-check"></i> Guardar</button>`);}
-function guardarPac(){const n=document.getElementById('np-n').value.trim();if(!n){toast('Ingresa nombre');return;}const tp=document.getElementById('np-tp').value,ps=parseFloat(document.getElementById('np-ps').value)||0,pct=parseFloat(document.getElementById('np-pct').value)||50,ts=parseInt(document.getElementById('np-ts').value)||0;const ses=[];for(let i=1;i<=ts;i++)ses.push({num:i,fecha:'',estado:'pendiente'});db.pacientes.push({id:Date.now(),nombre:n,tipo:tp,ps,pct,totalSes:ts,paq:document.getElementById('np-pq').value,obs:document.getElementById('np-ob').value,sesiones:ses,activo:true});save();renderPacs();closeMN();toast('✓ Paciente guardado');}
-function openSes(id){const p=db.pacientes.find(x=>x.id===id);if(!p)return;const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;const sd=(p.sesiones||[]).filter(s=>s.estado==='realizada').length;openMod(`<div class="mt2"><span>📋 ${p.nombre}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div style="background:var(--m3);border-radius:var(--rs);padding:12px;margin-bottom:14px"><div class="g3" style="font-size:12px"><div><div style="color:var(--text3)">Tipo</div><div style="font-weight:700">${p.tipo==='propio'?'Propio':'Consultorio '+p.pct+'%'}</div></div><div><div style="color:var(--text3)">Por sesión</div><div style="font-weight:700;color:var(--m1)">${fS(g)}</div></div><div><div style="color:var(--text3)">Generado</div><div style="font-weight:700;color:var(--green)">${fS(sd*g)}</div></div></div></div>${(p.sesiones||[]).map((s,i)=>`<div class="ses-row"><div style="font-weight:700;color:var(--m1);width:60px;font-size:12px">Ses. ${s.num}</div><input type="date" value="${s.fecha||''}" onchange="updSes(${p.id},${i},'fecha',this.value)" style="width:130px;margin:0;padding:6px 8px;font-size:12px"><select onchange="updSes(${p.id},${i},'estado',this.value)" style="width:120px;padding:6px 8px;font-size:12px"><option${s.estado==='pendiente'?' selected':''}>pendiente</option><option${s.estado==='realizada'?' selected':''}>realizada</option><option${s.estado==='cancelada'?' selected':''}>cancelada</option></select><span style="font-weight:700;${s.estado==='realizada'?'color:var(--green)':s.estado==='cancelada'?'color:var(--red)':'color:var(--text3)'}">${s.estado==='realizada'?`✓ ${fS(g)}`:s.estado==='cancelada'?'✗':'⏳'}</span></div>`).join('')}<button class="btn bp bfw" onclick="addSes(${p.id})" style="margin-top:10px"><i class="ti ti-plus"></i> Agregar sesión</button>`);}
-function updSes(pId,si,k,v){const p=db.pacientes.find(x=>x.id===pId);if(!p)return;p.sesiones[si][k]=v;save();renderPacs();}
-function addSes(pId){const p=db.pacientes.find(x=>x.id===pId);if(!p)return;p.sesiones.push({num:(p.sesiones||[]).length+1,fecha:'',estado:'pendiente'});p.totalSes=p.sesiones.length;save();openSes(pId);}
-function elimPac(id){if(!confirm('¿Eliminar paciente?'))return;db.pacientes=db.pacientes.filter(p=>p.id!==id);save();renderPacs();}
-function calcLiq(){const q=document.getElementById('lq').value,mes=document.getElementById('lmes').value;if(!mes){toast('Selecciona mes');return;}const[y,m]=mes.split('-').map(Number),dMin=q==='1'?1:16,dMax=q==='1'?15:new Date(y,m,0).getDate();const pacs=db.pacientes.filter(p=>p.tipo==='consultorio');let html=`<div class="card"><div class="ct"><div class="ctl">Liquidación ${q==='1'?'1ra (1-15)':'2da (16-fin)'} — ${mes}</div></div>`;let tot=0,hay=false;pacs.forEach(p=>{const ses=(p.sesiones||[]).filter(s=>{if(s.estado!=='realizada'||!s.fecha)return false;const d=new Date(s.fecha);return d.getFullYear()===y&&d.getMonth()===m-1&&d.getDate()>=dMin&&d.getDate()<=dMax;});if(!ses.length)return;hay=true;const g=(p.ps||0)*(p.pct||50)/100,gan=ses.length*g;tot+=gan;html+=`<div class="row"><div><strong>${p.nombre}</strong><div style="font-size:11px;color:var(--text3)">${ses.length} ses · ${fS(g)}/ses · ${p.pct}%</div></div><div class="pos">${fS(gan)}</div></div>`;});if(!hay)html+='<p style="color:var(--text3);font-size:13px;padding:10px 0">Sin sesiones de consultorio en este período.</p>';html+=`<div style="margin-top:12px;padding:12px;background:var(--m3);border-radius:var(--rs);display:flex;justify-content:space-between;align-items:center"><strong>Total a recibir:</strong><span style="font-size:20px;font-weight:800;color:var(--m1)">${fS(tot)}</span></div></div>`;document.getElementById('liq-res').innerHTML=html;}
-function renderRepCons(){const ms=getLast6();const arr=ms.map(m=>{const[y,mo]=m.split('-').map(Number);return db.pacientes.reduce((s,p)=>{const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;const ses=(p.sesiones||[]).filter(se=>{if(se.estado!=='realizada'||!se.fecha)return false;const d=new Date(se.fecha);return d.getFullYear()===y&&d.getMonth()===mo-1;});return s+ses.length*g;},0);});const tot=arr.reduce((s,v)=>s+v,0),totS=db.pacientes.reduce((s,p)=>(p.sesiones||[]).filter(x=>x.estado==='realizada').length+s,0);document.getElementById('cons-r').innerHTML=`<div class="metric"><div class="ml">Total generado</div><div class="mv cp">${fS(tot)}</div></div><div class="metric"><div class="ml">Sesiones</div><div class="mv cb">${totS}</div></div><div class="metric"><div class="ml">Por generar</div><div class="mv cv">${fS(ingConsPend())}</div></div>`;const lb=ms.map(m=>{const d=new Date(m+'-01');return d.toLocaleDateString('es-PE',{month:'short'});});const c=document.getElementById('cCons');if(c._ch)c._ch.destroy();c._ch=new Chart(c,{type:'bar',data:{labels:lb,datasets:[{label:'S/',data:arr,backgroundColor:'#A8D8C8',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});document.getElementById('cons-h').innerHTML=db.pacientes.map(p=>{const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;const sd=(p.sesiones||[]).filter(x=>x.estado==='realizada').length;return`<div class="row"><div><strong>${p.nombre}</strong><div style="font-size:11px;color:var(--text3)">${p.tipo} · ${sd} ses.</div></div><div class="pos">${fS(sd*g)}</div></div>`;}).join('');}
-
 function renderHogar(){const mes=getMes();const gastos=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&m.persona==='Hogar'&&m.tipo==='gasto');const tot=gastos.reduce((s,m)=>s+m.monto,0);document.getElementById('hogar-tot').textContent=fS(tot);document.getElementById('hogar-ap').innerHTML=`<div class="metric"><div class="ml">💚 Camila aportó</div><div class="mv cg">${fS(tot/2)}</div><div class="ms">50% estimado</div></div><div class="metric"><div class="ml">🌸 Mamá aportó</div><div class="mv cp">${fS(tot/2)}</div><div class="ms">50% estimado</div></div>`;document.getElementById('hogar-list').innerHTML=gastos.length?gastos.map(g=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700">${g.categoria}</div><div style="font-size:11px;color:var(--text3)">${g.fecha}${g.pr?' · '+g.pr:''}${g.nt?' · '+g.nt:''}</div></div><div class="neg">${fS(g.monto)}</div></div></div>`).join(''):'<div class="empty"><i class="ti ti-home"></i>Sin gastos del hogar este mes</div>';}
 
 function setST(t){document.getElementById('sp-o').style.display=t==='o'?'block':'none';document.getElementById('sp-s').style.display=t==='s'?'block':'none';document.getElementById('stab-o').classList.toggle('active',t==='o');document.getElementById('stab-s').classList.toggle('active',t==='s');}
@@ -1222,12 +1269,156 @@ function responder(){
   document.getElementById('ai-resp').innerHTML=`<div class="ai-msg">${resp}</div>`;document.getElementById('ai-inp').value='';
 }
 
-function setAT(t){AT=t;document.getElementById('ag-pend').classList.toggle('active',t==='pend');document.getElementById('ag-done').classList.toggle('active',t==='done');renderAgenda();}
-function openNT(){openMod(`<div class="mt2"><span>📝 Nueva tarea</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div class="fgrp"><label>Tarea</label><input type="text" id="t-n" placeholder="Cobrar internet, Pagar alquiler..."></div><div class="fg2"><div class="fgrp"><label>Prioridad</label><select id="t-pr"><option>Alta</option><option>Media</option><option>Baja</option></select></div><div class="fgrp"><label>Fecha límite</label><input type="date" id="t-f"></div></div><button class="btn bp bfw" onclick="guardarT()"><i class="ti ti-check"></i> Guardar</button>`);}
-function guardarT(){const n=document.getElementById('t-n').value.trim();if(!n)return;db.tareas.push({id:Date.now(),nombre:n,pr:document.getElementById('t-pr').value,fecha:document.getElementById('t-f').value,done:false});save();renderAgenda();closeMN();toast('✓ Guardado');}
-function renderAgenda(){const ts=db.tareas.filter(t=>AT==='pend'?!t.done:t.done);const el=document.getElementById('agenda-list');if(!ts.length){el.innerHTML='<div class="empty"><i class="ti ti-checklist"></i>Sin tareas</div>';return;}const pc={Alta:'br',Media:'ba',Baja:'bg'};el.innerHTML=ts.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="width:22px;height:22px;border-radius:50%;border:2px solid ${t.done?'var(--green)':'var(--border2)'};cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:${t.done?'var(--green)':'transparent'};color:#fff" onclick="togT(${t.id})">${t.done?'<i class="ti ti-check" style="font-size:12px"></i>':''}</div><div style="flex:1"><div style="font-weight:${t.done?'400':'600'};text-decoration:${t.done?'line-through':'none'};color:${t.done?'var(--text3)':'var(--text)'}">${t.nombre}</div>${t.fecha?`<div style="font-size:11px;color:var(--text3)">${t.fecha}</div>`:''}</div><span class="badge ${pc[t.pr]||'ba'}">${t.pr}</span><button class="btn bgh bxs" onclick="elimT(${t.id})" style="color:var(--text3)"><i class="ti ti-trash"></i></button></div>`).join('');}
-function togT(id){const t=db.tareas.find(x=>x.id===id);if(!t)return;t.done=!t.done;save();renderAgenda();}
-function elimT(id){db.tareas=db.tareas.filter(t=>t.id!==id);save();renderAgenda();}
+function setAT(t){
+  AT=t;
+  document.getElementById('ag-pend').classList.toggle('active',t==='pend');
+  document.getElementById('ag-done').classList.toggle('active',t==='done');
+  renderAgenda();
+}
+function openNT(id){
+  const t=id?db.tareas.find(x=>x.id===id):null;
+  openMod(`<div class="mt2"><span>${t?'✏️ Editar tarea':'📝 Nueva tarea'}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div class="fgrp"><label>Tarea</label><input type="text" id="t-n" placeholder="Cobrar Amazon a María..." value="${t?t.nombre:''}"></div>
+  <div class="fg2">
+    <div class="fgrp"><label>Fecha</label><input type="date" id="t-f" value="${t?t.fecha:new Date().toISOString().split('T')[0]}"></div>
+    <div class="fgrp"><label>Prioridad</label>
+      <select id="t-pr">
+        <option ${(!t||t.pr==='Alta')?'selected':''}>Alta</option>
+        <option ${(t&&t.pr==='Media')?'selected':''}>Media</option>
+        <option ${(t&&t.pr==='Baja')?'selected':''}>Baja</option>
+      </select>
+    </div>
+  </div>
+  <div class="fgrp"><label>Repetición</label>
+    <select id="t-rep" onchange="toggleRepCustom()">
+      <option value="no" ${(!t||t.rep==='no')?'selected':''}>No repetir</option>
+      <option value="quincenal" ${(t&&t.rep==='quincenal')?'selected':''}>Cada quincena (cada 15 días)</option>
+      <option value="mensual" ${(t&&t.rep==='mensual')?'selected':''}>Cada mes (mismo día)</option>
+      <option value="custom" ${(t&&t.rep==='custom')?'selected':''}>Personalizado</option>
+    </select>
+  </div>
+  <div id="rep-custom" style="display:${t&&t.rep==='custom'?'block':'none'}">
+    <div class="fg2">
+      <div class="fgrp"><label>Repetir cada</label><input type="number" id="t-rep-n" min="1" placeholder="1" value="${t&&t.repN?t.repN:1}"></div>
+      <div class="fgrp"><label>Unidad</label>
+        <select id="t-rep-u">
+          <option value="dias" ${(!t||!t.repU||t.repU==='dias')?'selected':''}>Días</option>
+          <option value="semanas" ${(t&&t.repU==='semanas')?'selected':''}>Semanas</option>
+          <option value="meses" ${(t&&t.repU==='meses')?'selected':''}>Meses</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="fgrp"><label>Nota (opcional)</label><input type="text" id="t-nt" placeholder="Observación..." value="${t?t.nota||'':''}"></div>
+  <button class="btn bp bfw" onclick="guardarT(${id||'null'})"><i class="ti ti-check"></i> ${t?'Guardar cambios':'Crear tarea'}</button>`);
+}
+function toggleRepCustom(){
+  const v=document.getElementById('t-rep').value;
+  document.getElementById('rep-custom').style.display=v==='custom'?'block':'none';
+}
+function guardarT(id){
+  const n=document.getElementById('t-n').value.trim();
+  if(!n){toast('Escribe el texto de la tarea');return;}
+  const rep=document.getElementById('t-rep').value;
+  const tarea={
+    id:id||Date.now(),
+    nombre:n,
+    fecha:document.getElementById('t-f').value,
+    pr:document.getElementById('t-pr').value,
+    rep,
+    repN:rep==='custom'?parseInt(document.getElementById('t-rep-n').value)||1:null,
+    repU:rep==='custom'?document.getElementById('t-rep-u').value:null,
+    nota:document.getElementById('t-nt').value.trim(),
+    done:false
+  };
+  if(id){
+    const idx=db.tareas.findIndex(x=>x.id===id);
+    if(idx>=0)db.tareas[idx]={...db.tareas[idx],...tarea,done:db.tareas[idx].done};
+  } else {
+    db.tareas.push(tarea);
+  }
+  save();renderAgenda();closeMN();toast(id?'✓ Tarea actualizada':'✓ Tarea creada');
+}
+function getRepLabel(t){
+  if(!t.rep||t.rep==='no')return'';
+  if(t.rep==='quincenal')return'🔁 Cada quincena';
+  if(t.rep==='mensual')return'🔁 Cada mes';
+  if(t.rep==='custom')return`🔁 Cada ${t.repN} ${t.repU||'días'}`;
+  return'';
+}
+function getTareaVencida(t){
+  if(!t.fecha)return false;
+  return new Date(t.fecha)<=new Date(new Date().toDateString());
+}
+function renderAgenda(){
+  generarRepeticiones();
+  const ts=db.tareas.filter(t=>AT==='pend'?!t.done:t.done)
+    .sort((a,b)=>{
+      if(!a.fecha)return 1;if(!b.fecha)return -1;
+      return a.fecha.localeCompare(b.fecha);
+    });
+  const el=document.getElementById('agenda-list');
+  if(!ts.length){
+    el.innerHTML=`<div class="empty"><i class="ti ti-checklist"></i>${AT==='pend'?'Sin tareas pendientes ✨':'Sin tareas completadas'}</div>`;
+    return;
+  }
+  const pc={Alta:'br',Media:'ba',Baja:'bg'};
+  el.innerHTML=ts.map(t=>{
+    const venc=!t.done&&getTareaVencida(t);
+    const rep=getRepLabel(t);
+    return`<div style="display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="width:24px;height:24px;border-radius:50%;border:2px solid ${t.done?'var(--green)':'var(--border2)'};cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:${t.done?'var(--green)':'transparent'};color:#fff;margin-top:2px" onclick="togT(${t.id})">
+        ${t.done?'<i class="ti ti-check" style="font-size:12px"></i>':''}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:${t.done?'400':'600'};text-decoration:${t.done?'line-through':'none'};color:${t.done?'var(--text3)':venc?'var(--red)':'var(--text)'}">${t.nombre}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">
+          ${t.fecha?`<span>${venc?'⚠️':'📅'} ${t.fecha}</span>`:''}
+          ${rep?`<span style="color:var(--m1)">${rep}</span>`:''}
+          ${t.nota?`<span>📝 ${t.nota}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <span class="badge ${pc[t.pr]||'ba'}">${t.pr}</span>
+        ${!t.done?`<button class="btn bgh bxs" onclick="openNT(${t.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button>`:''}
+        <button class="btn bgh bxs" onclick="elimT(${t.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function generarRepeticiones(){
+  const hoy=new Date();
+  const hoySt=hoy.toISOString().split('T')[0];
+  db.tareas.filter(t=>t.rep&&t.rep!=='no'&&t.done&&t.fecha).forEach(t=>{
+    let next=new Date(t.fecha);
+    if(t.rep==='mensual')next.setMonth(next.getMonth()+1);
+    else if(t.rep==='quincenal')next.setDate(next.getDate()+15);
+    else if(t.rep==='custom'){
+      const n=t.repN||1;
+      if(t.repU==='semanas')next.setDate(next.getDate()+n*7);
+      else if(t.repU==='meses')next.setMonth(next.getMonth()+n);
+      else next.setDate(next.getDate()+n);
+    }
+    const nextSt=next.toISOString().split('T')[0];
+    if(nextSt<=hoySt){
+      const yaExiste=db.tareas.some(x=>x.nombre===t.nombre&&x.fecha===nextSt&&!x.done);
+      if(!yaExiste){
+        db.tareas.push({id:Date.now()+Math.random(),nombre:t.nombre,fecha:nextSt,pr:t.pr,rep:t.rep,repN:t.repN,repU:t.repU,nota:t.nota,done:false});
+        save();
+      }
+    }
+  });
+}
+function togT(id){
+  const t=db.tareas.find(x=>x.id===id);
+  if(!t)return;
+  t.done=!t.done;
+  save();renderAgenda();
+}
+function elimT(id){
+  db.tareas=db.tareas.filter(t=>t.id!==id);
+  save();renderAgenda();
+}
 
 function renderCC(){
   const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value;
