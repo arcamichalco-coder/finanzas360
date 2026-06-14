@@ -225,7 +225,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <button class="ni" onclick="go('emergencia')" id="ni-emergencia"><i class="ti ti-shield"></i>Fondo Emergencia</button>
     <button class="ni" onclick="go('proyeccion')" id="ni-proyeccion"><i class="ti ti-trending-up"></i>Proyección</button>
     <div class="sb-sec">Consultorio</div>
-    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Mis Pacientes</button>
+    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Tea Abrazo</button>
     <div class="sb-sec">Hogar y Servicios</div>
     <button class="ni" onclick="go('hogar')" id="ni-hogar"><i class="ti ti-home"></i>Hogar Compartido</button>
     <button class="ni" onclick="go('servicios')" id="ni-servicios"><i class="ti ti-device-tv"></i>Servicios</button>
@@ -429,16 +429,34 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- CONSULTORIO -->
 <div class="screen" id="screen-consultorio">
-  <div class="tabs"><button class="tab active" id="ctab-p" onclick="setCT('p')">👤 Pacientes</button><button class="tab" id="ctab-l" onclick="setCT('l')">💰 Liquidaciones</button><button class="tab" id="ctab-r" onclick="setCT('r')">📊 Reportes</button></div>
-  <div id="cp-p"><div class="g3" id="cons-s" style="margin-bottom:12px"></div><div class="sec-h"><span class="sec-ht"><i class="ti ti-brain"></i> Mis pacientes</span><button class="btn bp bsm" onclick="openNP()"><i class="ti ti-plus"></i> Agregar</button></div><div id="lista-pac"></div></div>
-  <div id="cp-l" style="display:none">
-    <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-calculator"></i>Calcular liquidación</div></div>
-      <div class="fg2"><div class="fgrp"><label>Quincena</label><select id="lq"><option value="1">1ra (1-15)</option><option value="2">2da (16-fin)</option></select></div><div class="fgrp"><label>Mes</label><input type="month" id="lmes"></div></div>
-      <button class="btn bp bfw" onclick="calcLiq()"><i class="ti ti-calculator"></i> Calcular</button>
+  <!-- Nombre editable -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct">
+      <div class="ctl"><i class="ti ti-building"></i><span id="fuente-nombre-lbl">Tea Abrazo</span></div>
+      <button class="btn bgh bxs" onclick="editarNombreFuente()" style="color:var(--m1)"><i class="ti ti-pencil"></i> Editar nombre</button>
     </div>
-    <div id="liq-res"></div>
   </div>
-  <div id="cp-r" style="display:none"><div class="g3" id="cons-r" style="margin-bottom:12px"></div><div class="card"><div class="ct"><div class="ctl"><i class="ti ti-chart-bar"></i>Por mes</div></div><div style="position:relative;height:180px"><canvas id="cCons"></canvas></div></div><div class="card"><div class="ct"><div class="ctl"><i class="ti ti-list"></i>Por paciente</div></div><div id="cons-h"></div></div></div>
+
+  <!-- Resumen del mes -->
+  <div class="g2" style="margin-bottom:12px">
+    <div class="hcard hc-m" style="margin:0">
+      <div style="font-size:11px;opacity:0.85;margin-bottom:2px">COBRADO ESTE MES</div>
+      <div id="ta-tot-mes" style="font-size:26px;font-weight:800">S/ 0.00</div>
+    </div>
+    <div class="hcard hc-l" style="margin:0">
+      <div style="font-size:11px;opacity:0.85;margin-bottom:2px">ADELANTOS DEL MES</div>
+      <div id="ta-adelantos" style="font-size:26px;font-weight:800">S/ 0.00</div>
+    </div>
+  </div>
+
+  <!-- Botón registrar cobro -->
+  <div class="sec-h">
+    <span class="sec-ht"><i class="ti ti-cash"></i> Cobros registrados</span>
+    <button class="btn bp bsm" onclick="openRegistrarCobro()"><i class="ti ti-plus"></i> Registrar cobro</button>
+  </div>
+
+  <!-- Lista de cobros -->
+  <div id="ta-lista-cobros"></div>
 </div>
 
 <!-- HOGAR -->
@@ -463,8 +481,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
   <!-- FORMULARIO NUEVO GASTO FIJO -->
   <div class="card" id="fijos-form-card">
     <div class="ct"><div class="ctl"><i class="ti ti-plus"></i> Nuevo gasto fijo</div>
-      <button class="btn bgh bxs" onclick="toggleFijosForm()" id="fijos-form-toggle" style="color:var(--m1)">+ Agregar</button>
-    </div>
+      <button class="btn bp bsm" onclick="toggleFijosForm()"><i class="ti ti-plus"></i> Nuevo</button>    </div>
     <div id="fijos-form" style="display:none">
       <div class="fg3">
         <div class="fgrp"><label>Nombre</label><input type="text" id="nf-n" placeholder="Luz, Internet..."></div>
@@ -665,7 +682,7 @@ function go(id){
   const ni=document.getElementById('ni-'+id);if(ni)ni.classList.add('active');
   const t=TITLES[id]||id;document.getElementById('topbar-t').textContent=t;document.getElementById('mob-title').textContent=t;
   closeSB();
-  const R={dashboard:renderDash,actividad:renderActividad,asistente:renderAI,historial:renderHist,cuentas:renderCuentas,metas:renderMetas,deudas:renderDeudas,prestamos:renderPrest,emergencia:renderFE,proyeccion:renderProyeccion,consultorio:()=>setCT('p'),hogar:renderHogar,servicios:renderServs,fijos:renderFijos,personas:renderPers,patrimonio:renderPat,calendario:renderCal,reportes:()=>setRT('a'),agenda:renderAgenda,config:renderCC};
+  const R={dashboard:renderDash,actividad:renderActividad,asistente:renderAI,historial:renderHist,cuentas:renderCuentas,metas:renderMetas,deudas:renderDeudas,prestamos:renderPrest,emergencia:renderFE,proyeccion:renderProyeccion,consultorio:renderConsultorio,hogar:renderHogar,servicios:renderServs,fijos:renderFijos,personas:renderPers,patrimonio:renderPat,calendario:renderCal,reportes:()=>setRT('a'),agenda:renderAgenda,config:renderCC};
   if(R[id])R[id]();
   if(id==='registrar'){updateCats();renderHormiga();renderCtasSelect();}
 }
@@ -699,7 +716,9 @@ function renderDash(){
     <div class="hcard hc-m" style="margin:0"><div style="font-size:11px;opacity:0.85;margin-bottom:2px">SALDO TOTAL</div><div style="font-size:24px;font-weight:800">${fS(saldo)}</div><div style="font-size:11px;opacity:0.75;margin-top:2px">En todas tus cuentas</div></div>
     <div class="hcard hc-r" style="margin:0"><div style="font-size:11px;opacity:0.7;margin-bottom:2px;color:var(--text2)">COMPROMETIDO</div><div style="font-size:24px;font-weight:800;color:var(--red)">${fS(comprometido)}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">Deudas + fijos pendientes</div></div>
     <div class="hcard hc-l" style="margin:0"><div style="font-size:11px;opacity:0.85;margin-bottom:2px">DISPONIBLE</div><div style="font-size:24px;font-weight:800">${fS(disponible)}</div><div style="font-size:11px;opacity:0.75;margin-top:2px">Puedes usar libremente</div></div>`;
-  const cM=ingCons(mes),cP=ingConsPend();
+  if(!db.cobros)db.cobros=[];
+  const cM=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+c.monto,0);
+  const cP=0;
   document.getElementById('dash-m').innerHTML=[
     {l:'Ingresos',v:fS(ing),c:'cg',s:'del mes'},{l:'Gastos',v:fS(gas),c:'cr',s:'del mes'},
     {l:ahorro>=0?'Ahorro':'Déficit',v:fS(Math.abs(ahorro)),c:ahorro>=0?'cg':'cr',s:'del mes'},
@@ -708,8 +727,7 @@ function renderDash(){
     {l:'Patrimonio',v:fS(pat),c:'cp',s:'neto'},
   ].map(m=>`<div class="metric"><div class="ml">${m.l}</div><div class="mv ${m.c}">${m.v}</div><div class="ms">${m.s}</div></div>`).join('');
   const dia=new Date().getDate(),diasMes=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
-  document.getElementById('dash-cons').innerHTML=`<div class="ct"><div class="ctl"><i class="ti ti-brain"></i>Consultorio del mes</div><button class="btn bgh bxs" onclick="go('consultorio')" style="color:var(--m1)">Ver →</button></div><div class="g4"><div class="metric"><div class="ml">Generado</div><div class="mv cb">${fS(cM)}</div></div><div class="metric"><div class="ml">Por generar</div><div class="mv cv">${fS(cP)}</div></div><div class="metric"><div class="ml">Pacientes activos</div><div class="mv cp">${db.pacientes.filter(p=>p.activo).length}</div></div><div class="metric"><div class="ml">Sesiones este mes</div><div class="mv cg">${db.pacientes.reduce((s,p)=>(p.sesiones||[]).filter(x=>x.estado==='realizada'&&x.fecha&&x.fecha.startsWith(mes)).length+s,0)}</div></div></div>`;
-  const prox=db.eventos.filter(e=>e.dia>=dia&&!e.pm[mes]).sort((a,b)=>a.dia-b.dia);
+document.getElementById('dash-cons').innerHTML=`<div class="ct"><div class="ctl"><i class="ti ti-brain"></i>${getNombreFuente()} — este mes</div><button class="btn bgh bxs" onclick="go('consultorio')" style="color:var(--m1)">Ver →</button></div><div class="g2"><div class="metric"><div class="ml">Cobrado este mes</div><div class="mv cb">${fS(cM)}</div></div><div class="metric"><div class="ml">Cobros registrados</div><div class="mv cp">${db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).length}</div></div></div>`;  const prox=db.eventos.filter(e=>e.dia>=dia&&!e.pm[mes]).sort((a,b)=>a.dia-b.dia);
   document.getElementById('dash-pp').innerHTML=prox.filter(e=>e.tipo==='fijo').slice(0,4).map(e=>{const d=e.dia-dia;const uc=d<=2?'br':d<=7?'ba':'bm';return`<div class="row"><div><strong>${e.nombre}</strong><div style="font-size:11px;color:var(--text3)">${e.resp}</div></div><div><span class="badge ${uc}">${d===0?'Hoy':d===1?'Mañana':'En '+d+'d'}</span>${e.monto?`<br><span class="neg">${fS(e.monto)}</span>`:''}</div></div>`;}).join('')||'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin pagos próximos ✨</p>';
   document.getElementById('dash-pc').innerHTML=db.prestamos.filter(p=>p.saldo>0).slice(0,4).map(p=>`<div class="row"><div><strong>${p.deudor}</strong><div style="font-size:11px;color:var(--text3)">${p.prestador}</div></div><div class="pos">${fS(p.saldo)}</div></div>`).join('')||'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin cobros pendientes ✨</p>';
   const r=dia>0?gas/dia:0,pG=r*diasMes,pA=ing-pG;
@@ -842,8 +860,144 @@ function elimP(id){db.prestamos=db.prestamos.filter(p=>p.id!==id);save();renderP
 function guardarFE(){const per=document.getElementById('fe-per').value,mn=parseFloat(document.getElementById('fe-mn').value)||0,mt=parseFloat(document.getElementById('fe-mt').value)||0;const ex=db.fe.find(f=>f.persona===per);if(ex){ex.monto=mn;ex.meta=mt;}else{db.fe.push({persona:per,monto:mn,meta:mt});}save();renderFE();toast('✓ Actualizado');}
 function renderFE(){const tot=db.fe.reduce((s,f)=>s+f.monto,0);const{gas}=calcMes(getMes());const mc=gas>0?(tot/gas).toFixed(1):0;document.getElementById('fe-tot').textContent=fS(tot);document.getElementById('fe-mes').textContent=`Cubre aprox. ${mc} mes(es) de gastos`;['Camila','Mamá'].forEach(per=>{const f=db.fe.find(x=>x.persona===per)||{monto:0,meta:1000};const pct=f.meta>0?Math.min(100,(f.monto/f.meta)*100):0;const fc=pct>=75?'pg':pct>=40?'pa':'pm';const k=per==='Camila'?'c':'m';document.getElementById(`fe-${k}`).innerHTML=`<div style="font-size:20px;font-weight:800;color:var(--m1)">${fS(f.monto)}</div><div class="prog"><div class="pf ${fc}" style="width:${pct.toFixed(0)}%"></div></div><div style="font-size:11px;color:var(--text3)">${pct.toFixed(0)}% de ${fS(f.meta)}</div>`;});}
 
-function setCT(t){['p','l','r'].forEach(x=>{document.getElementById('cp-'+x).style.display=x===t?'block':'none';document.getElementById('ctab-'+x).classList.toggle('active',x===t);});if(t==='p')renderPacs();if(t==='l'&&document.getElementById('lmes'))document.getElementById('lmes').value=getMes();if(t==='r')renderRepCons();}
-function renderPacs(){
+// ── TEA ABRAZO ─────────────────────────────────────────────────────────────
+function getNombreFuente(){return db.nombreFuente||'Tea Abrazo';}
+function editarNombreFuente(){
+  openMod(`<div class="mt2"><span>✏️ Editar nombre</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div class="fgrp"><label>Nombre de la fuente</label><input type="text" id="fn-n" value="${getNombreFuente()}"></div>
+  <button class="btn bp bfw" onclick="guardarNombreFuente()"><i class="ti ti-check"></i> Guardar</button>`);
+}
+function guardarNombreFuente(){
+  const n=document.getElementById('fn-n').value.trim();
+  if(!n){toast('Ingresa un nombre');return;}
+  db.nombreFuente=n;
+  save();
+  document.getElementById('fuente-nombre-lbl').textContent=n;
+  closeMN();toast('✓ Nombre actualizado');
+}
+function openRegistrarCobro(id){
+  const cobro=id?db.cobros.find(c=>c.id===id):null;
+  const pacs=cobro?JSON.stringify(cobro.pacientes):'[]';
+  openMod(`<div class="mt2"><span>${cobro?'✏️ Editar cobro':'💰 Registrar cobro'}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div class="fg2">
+    <div class="fgrp"><label>Fecha del cobro</label><input type="date" id="co-fecha" value="${cobro?cobro.fecha:new Date().toISOString().split('T')[0]}"></div>
+    <div class="fgrp"><label>Monto recibido (S/)</label><input type="number" id="co-monto" placeholder="0.00" step="0.01" value="${cobro?cobro.monto:''}"></div>
+  </div>
+  <div class="fgrp" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--m3);border-radius:var(--rs)">
+    <input type="checkbox" id="co-adelanto" style="width:18px;height:18px" ${cobro&&cobro.adelanto?'checked':''}>
+    <label style="margin:0;font-size:13px;font-weight:600;cursor:pointer" for="co-adelanto">¿Es adelanto de la próxima quincena?</label>
+  </div>
+  <div style="margin:12px 0 6px;font-size:12px;font-weight:700;color:var(--m1);text-transform:uppercase">Detalle de pacientes</div>
+  <div id="co-pacs-list"></div>
+  <button class="btn bgh bsm" onclick="addPacCobro()" style="color:var(--m1);margin-bottom:10px"><i class="ti ti-plus"></i> Agregar paciente</button>
+  <div class="fgrp"><label>Nota general</label><textarea id="co-nota" rows="2" placeholder="Observaciones...">${cobro?cobro.nota||'':''}</textarea></div>
+  <button class="btn bp bfw" onclick="guardarCobro(${id||'null'})"><i class="ti ti-check"></i> ${cobro?'Guardar cambios':'Registrar cobro'}</button>`);
+  // Cargar pacientes si es edición
+  const initPacs=cobro?cobro.pacientes:[];
+  window._cobPacs=initPacs.length?[...initPacs]:[{nombre:'',nota:''}];
+  renderPacsCobro();
+}
+function renderPacsCobro(){
+  document.getElementById('co-pacs-list').innerHTML=window._cobPacs.map((p,i)=>`
+    <div style="background:var(--b1);border-radius:var(--rs);padding:10px;margin-bottom:8px">
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input type="text" placeholder="Nombre del paciente" value="${p.nombre||''}" oninput="window._cobPacs[${i}].nombre=this.value" style="flex:1;margin:0">
+        <button class="btn bgh bxs" onclick="removePacCobro(${i})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>
+      <textarea placeholder="Nota: paquete de 6, impartí 3 hasta el 15/06, S/250 total, 50% tuyo..." rows="2" oninput="window._cobPacs[${i}].nota=this.value" style="margin:0">${p.nota||''}</textarea>
+    </div>`).join('');
+}
+function addPacCobro(){
+  window._cobPacs.push({nombre:'',nota:''});
+  renderPacsCobro();
+}
+function removePacCobro(i){
+  window._cobPacs.splice(i,1);
+  renderPacsCobro();
+}
+function guardarCobro(id){
+  const fecha=document.getElementById('co-fecha').value;
+  const monto=parseFloat(document.getElementById('co-monto').value)||0;
+  if(!fecha||!monto){toast('Completa fecha y monto');return;}
+  const cobro={
+    id:id||Date.now(),
+    fecha,
+    monto,
+    adelanto:document.getElementById('co-adelanto').checked,
+    pacientes:window._cobPacs.filter(p=>p.nombre.trim()),
+    nota:document.getElementById('co-nota').value.trim()
+  };
+  if(!db.cobros)db.cobros=[];
+  if(id){const idx=db.cobros.findIndex(c=>c.id===id);if(idx>=0)db.cobros[idx]=cobro;}
+  else db.cobros.push(cobro);
+  // Registrar como ingreso en movimientos
+  if(!id){
+    db.movimientos.push({
+      id:Date.now()+1,fecha,tipo:'ingreso',persona:'Camila',
+      categoria:'Ingresos del mes',subcategoria:'Tea Abrazo',
+      monto,metodo:'Transferencia',pr:getNombreFuente(),
+      nt:cobro.nota||''
+    });
+  }
+  save();closeMN();renderConsultorio();toast(id?'✓ Cobro actualizado':'✓ Cobro registrado');
+}
+function eliminarCobro(id){
+  if(!confirm('¿Eliminar este cobro?'))return;
+  db.cobros=db.cobros.filter(c=>c.id!==id);
+  save();renderConsultorio();toast('Cobro eliminado');
+}
+function renderConsultorio(){
+  if(!db.cobros)db.cobros=[];
+  if(!db.nombreFuente)db.nombreFuente='Tea Abrazo';
+  document.getElementById('fuente-nombre-lbl').textContent=db.nombreFuente;
+  const mes=getMes();
+  const cobMes=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes));
+  const totMes=cobMes.reduce((s,c)=>s+c.monto,0);
+  const totAdel=cobMes.filter(c=>c.adelanto).reduce((s,c)=>s+c.monto,0);
+  document.getElementById('ta-tot-mes').textContent=fS(totMes);
+  document.getElementById('ta-adelantos').textContent=fS(totAdel);
+  const el=document.getElementById('ta-lista-cobros');
+  if(!db.cobros.length){
+    el.innerHTML='<div class="empty"><i class="ti ti-cash"></i>Sin cobros registrados aún</div>';return;
+  }
+  // Agrupar por mes
+  const porMes={};
+  db.cobros.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c=>{
+    const m=c.fecha.substring(0,7);
+    if(!porMes[m])porMes[m]=[];
+    porMes[m].push(c);
+  });
+  el.innerHTML=Object.entries(porMes).map(([m,cobros])=>{
+    const tot=cobros.reduce((s,c)=>s+c.monto,0);
+    const lbl=new Date(m+'-01').toLocaleDateString('es-PE',{month:'long',year:'numeric'});
+    return`<div class="card">
+      <div class="ct"><div class="ctl"><i class="ti ti-calendar"></i>${lbl}</div><span class="badge bg">Total: ${fS(tot)}</span></div>
+      ${cobros.map(c=>`
+        <div style="background:var(--m3);border-radius:var(--rs);padding:12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:var(--green)">${fS(c.monto)}</div>
+              <div style="font-size:11px;color:var(--text3)">${c.fecha}${c.adelanto?' · <span style="color:var(--amber);font-weight:700">⚡ Adelanto</span>':''}</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button class="btn bgh bxs" onclick="openRegistrarCobro(${c.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button>
+              <button class="btn bgh bxs" onclick="eliminarCobro(${c.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+            </div>
+          </div>
+          ${c.pacientes&&c.pacientes.length?`
+            <div style="margin-bottom:6px">
+              ${c.pacientes.map(p=>`
+                <div style="background:#fff;border-radius:8px;padding:8px;margin-bottom:4px">
+                  <div style="font-weight:600;font-size:12px">${p.nombre}</div>
+                  ${p.nota?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${p.nota}</div>`:''}
+                </div>`).join('')}
+            </div>`:''}
+          ${c.nota?`<div style="font-size:12px;color:var(--text2);border-top:1px solid var(--border);padding-top:6px;margin-top:4px">📝 ${c.nota}</div>`:''}
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+  function renderPacs(){
   const mes=getMes();const cM=ingCons(mes),cP=ingConsPend();
   document.getElementById('cons-s').innerHTML=`<div class="metric"><div class="ml">Pacientes</div><div class="mv cp">${db.pacientes.length}</div></div><div class="metric"><div class="ml">Generado</div><div class="mv cg">${fS(cM)}</div></div><div class="metric"><div class="ml">Por generar</div><div class="mv cv">${fS(cP)}</div></div>`;
   const el=document.getElementById('lista-pac');if(!db.pacientes.length){el.innerHTML='<div class="empty"><i class="ti ti-brain"></i>Sin pacientes</div>';return;}
