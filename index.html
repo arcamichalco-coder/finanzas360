@@ -258,7 +258,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- DASHBOARD -->
 <div class="screen active" id="screen-dashboard">
-  <div class="g3" id="dash-saldo" style="margin-bottom:12px"></div>
+  <div class="pb-tab" id="dash-tabs" style="margin-bottom:12px"></div> <div class="g3" id="dash-saldo" style="margin-bottom:12px"></div>
   <div id="dash-sem" class="sem-card"></div>
   <div class="comp-card" id="dash-comp"></div>
   <div class="g4" id="dash-m" style="margin-bottom:12px"></div>
@@ -611,7 +611,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 const DC={gasto:{Camila:['Pasajes','Plataformas digitales','Cuidado personal','Formación profesional','Colegiatura','Salud','Compras personales','Snacks y antojos','Delivery','Cafés','Compras impulsivas','Ropa','Entretenimiento','Tecnología'],'Mamá':['Alquiler','Banco','Transporte','Salud','Mercado','Gastos personales','Compras pequeñas','Extras de mercado'],Hogar:['Agua','Luz','Gas','Internet','Mercado hogar','Limpieza','Mejoras','Reparaciones','Alquiler hogar']},ingreso:{Camila:['Ingresos del mes','Otros ingresos'],'Mamá':['Sueldo','Ingresos adicionales','Otros apoyos'],Hogar:['Aportes familiares','Otros']}};
 const DSC={gasto:{Camila:{'Salud':['Consulta médica','Medicamentos','Laboratorio','Emergencia','Óptica'],'Cuidado personal':['Peluquería','Cosméticos','Estética','Depilación'],'Formación profesional':['Cursos','Libros','Materiales','Congresos'],'Snacks y antojos':['Bodega','Delivery','Cafetería','Kiosco'],'Tecnología':['Equipos','Accesorios','Suscripciones'],'Pasajes':['Bus','Taxi','Uber','Combi']},'Mamá':{'Mercado':['Verduras','Carnes','Limpieza','Abarrotes'],'Salud':['Consulta','Medicamentos','Exámenes']},Hogar:{'Mercado hogar':['Verduras','Carnes','Limpieza','Abarrotes'],'Mejoras':['Muebles','Electrodomésticos','Decoración']}},ingreso:{Camila:{},'Mamá':{},Hogar:{}}};
 const HC=['Snacks y antojos','Delivery','Cafés','Compras impulsivas','Compras pequeñas','Extras de mercado'];
-let MT='gasto',PR='Camila',CF=new Date(),AT='pend';
+let MT='gasto',PR='Camila',CF=new Date(),AT='pend',DT='todo';
 let db={movimientos:[],deudas:[],prestamos:[],metas:[],patrimonio_a:[],patrimonio_p:[],serv_o:[],serv_s:[],eventos:[],pacientes:[],personas:[],tareas:[],notifs:[],fe:[],metaAnual:{v:0,y:new Date().getFullYear()},cuentas:[],cats:JSON.parse(JSON.stringify(DC)),subcats:JSON.parse(JSON.stringify(DSC))};
 
 window._lastSaveTs=0;
@@ -724,33 +724,143 @@ function marcarLeidas(){db.notifs=[];save();renderActividad();}
 
 function renderDash(){
   genNotifs();renderAlerts();renderSemCard();renderCompCard();
-  const mes=getMes();const{ing,gas,ahorro,deu,pre,pat,fijos,saldo,comprometido,disponible}=calcMes(mes);
-  const sem=getSem(ing,gas,deu);const sc={v:'sv',a:'sa',r:'sr'};const st={v:'🌿 Salud OK',a:'🍂 Atención',r:'⚠ Riesgo'};
-  document.getElementById('topbar-sem').innerHTML=`<span class="sem ${sc[sem]}">${st[sem]}</span>`;
+  renderDashTabs();
+  const mes=getMes();
+
+  if(DT==='todo'){
+    const{ing,gas,ahorro,deu,pre,pat,fijos,saldo,comprometido,disponible}=calcMes(mes);
+    const sem=getSem(ing,gas,deu);const sc={v:'sv',a:'sa',r:'sr'};const st={v:'🌿 Salud OK',a:'🍂 Atención',r:'⚠ Riesgo'};
+    document.getElementById('topbar-sem').innerHTML=`<span class="sem ${sc[sem]}">${st[sem]}</span>`;
+    document.getElementById('dash-saldo').innerHTML=`
+      <div class="hcard hc-m" style="margin:0"><div style="font-size:11px;opacity:0.85;margin-bottom:2px">SALDO TOTAL</div><div style="font-size:24px;font-weight:800">${fS(saldo)}</div><div style="font-size:11px;opacity:0.75;margin-top:2px">En todas tus cuentas</div></div>
+      <div class="hcard hc-r" style="margin:0"><div style="font-size:11px;opacity:0.7;margin-bottom:2px;color:var(--text2)">COMPROMETIDO</div><div style="font-size:24px;font-weight:800;color:var(--red)">${fS(comprometido)}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">Deudas + fijos pendientes</div></div>
+      <div class="hcard hc-l" style="margin:0"><div style="font-size:11px;opacity:0.85;margin-bottom:2px">DISPONIBLE</div><div style="font-size:24px;font-weight:800">${fS(disponible)}</div><div style="font-size:11px;opacity:0.75;margin-top:2px">Puedes usar libremente</div></div>`;
+    if(!db.cobros)db.cobros=[];
+    const cM=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+c.monto,0);
+    const cP=0;
+    document.getElementById('dash-m').innerHTML=[
+      {l:'Ingresos',v:fS(ing),c:'cg',s:'del mes'},{l:'Gastos',v:fS(gas),c:'cr',s:'del mes'},
+      {l:ahorro>=0?'Ahorro':'Déficit',v:fS(Math.abs(ahorro)),c:ahorro>=0?'cg':'cr',s:'del mes'},
+      {l:'Deudas',v:fS(deu),c:deu>0?'ca':'cg',s:'pendiente'},{l:'Me deben',v:fS(pre),c:'cp',s:'por cobrar'},
+      {l:getNombreFuente(),v:fS(cM),c:'cb',s:'cobrado'},{l:'Patrimonio',v:fS(pat),c:'cp',s:'neto'},
+    ].map(m=>`<div class="metric"><div class="ml">${m.l}</div><div class="mv ${m.c}">${m.v}</div><div class="ms">${m.s}</div></div>`).join('');
+    const dia=new Date().getDate(),diasMes=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+    document.getElementById('dash-cons').innerHTML=`<div class="ct"><div class="ctl"><i class="ti ti-brain"></i>${getNombreFuente()} — este mes</div><button class="btn bgh bxs" onclick="go('consultorio')" style="color:var(--m1)">Ver →</button></div><div class="g2"><div class="metric"><div class="ml">Cobrado este mes</div><div class="mv cb">${fS(cM)}</div></div><div class="metric"><div class="ml">Cobros registrados</div><div class="mv cp">${db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).length}</div></div></div>`;
+    const prox=db.eventos.filter(e=>e.dia>=dia&&!e.pm[mes]).sort((a,b)=>a.dia-b.dia);
+    document.getElementById('dash-pp').innerHTML=prox.filter(e=>e.tipo==='fijo').slice(0,4).map(e=>{const d=e.dia-dia;const uc=d<=2?'br':d<=7?'ba':'bm';return`<div class="row"><div><strong>${e.nombre}</strong><div style="font-size:11px;color:var(--text3)">${e.resp}</div></div><div><span class="badge ${uc}">${d===0?'Hoy':d===1?'Mañana':'En '+d+'d'}</span>${e.monto?`<br><span class="neg">${fS(e.monto)}</span>`:''}</div></div>`;}).join('')||'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin pagos próximos ✨</p>';
+    document.getElementById('dash-pc').innerHTML=db.prestamos.filter(p=>p.saldo>0).slice(0,4).map(p=>`<div class="row"><div><strong>${p.deudor}</strong><div style="font-size:11px;color:var(--text3)">${p.prestador}</div></div><div class="pos">${fS(p.saldo)}</div></div>`).join('')||'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin cobros pendientes ✨</p>';
+    const r=dia>0?gas/dia:0,pG=r*diasMes,pA=ing-pG;
+    let txt=`Ritmo: <strong>${fS(r)}/día</strong>. Al cierre gastarías <strong>${fS(pG)}</strong>. `;
+    if(disponible>0)txt+=`Disponible ahora: <strong style="color:var(--green)">${fS(disponible)}</strong>. `;
+    txt+=pA>=0?`Ahorro estimado: <strong style="color:var(--green)">${fS(pA)}</strong> ✅`:`<strong style="color:var(--red)">⚠ Posible déficit ${fS(Math.abs(pA))}</strong>`;
+    document.getElementById('dash-proy').innerHTML=txt;
+    renderCharts();
+  } else {
+    renderDashPersona(DT,mes);
+  }
+}
+function renderDashTabs(){
+  const personas=['todo',...new Set([...db.personas.map(p=>p.nombre),'Camila','Mamá','Hogar'])];
+  const icons={todo:'🌐',Camila:'💚',Mamá:'🌸',Hogar:'🏠'};
+  document.getElementById('dash-tabs').innerHTML=personas.map(p=>`
+    <button class="pb-btn ${DT===p?'active':''}" onclick="setDT('${p}')">
+      ${icons[p]||'👤'} ${p==='todo'?'Todo':p}
+    </button>`).join('');
+}
+function setDT(p){
+  DT=p;
+  // Limpiar vistas de persona si volvemos a Todo
+  if(p==='todo'){
+    document.getElementById('dash-saldo').innerHTML='';
+    document.getElementById('dash-m').innerHTML='';
+    document.getElementById('dash-cons').innerHTML='';
+    document.getElementById('dash-pp').innerHTML='';
+    document.getElementById('dash-pc').innerHTML='';
+    document.getElementById('dash-proy').innerHTML='';
+  }
+  renderDash();
+}
+function renderDashPersona(per,mes){
+  const movs=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&m.persona===per);
+  const ing=movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0);
+  const gas=movs.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0);
+  const balance=ing-gas;
+  const fijos=db.eventos.filter(e=>e.tipo==='fijo'&&e.resp===per);
+  const totalFijos=fijos.reduce((s,e)=>s+reservaMes(e),0);
+  const deudas=db.deudas.filter(d=>d.persona===per);
+  const totalDeudas=deudas.reduce((s,d)=>s+d.saldo,0);
+  const icons={Camila:'💚',Mamá:'🌸',Hogar:'🏠'};
+
+  document.getElementById('topbar-sem').innerHTML='';
   document.getElementById('dash-saldo').innerHTML=`
-    <div class="hcard hc-m" style="margin:0"><div style="font-size:11px;opacity:0.85;margin-bottom:2px">SALDO TOTAL</div><div style="font-size:24px;font-weight:800">${fS(saldo)}</div><div style="font-size:11px;opacity:0.75;margin-top:2px">En todas tus cuentas</div></div>
-    <div class="hcard hc-r" style="margin:0"><div style="font-size:11px;opacity:0.7;margin-bottom:2px;color:var(--text2)">COMPROMETIDO</div><div style="font-size:24px;font-weight:800;color:var(--red)">${fS(comprometido)}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">Deudas + fijos pendientes</div></div>
-    <div class="hcard hc-l" style="margin:0"><div style="font-size:11px;opacity:0.85;margin-bottom:2px">DISPONIBLE</div><div style="font-size:24px;font-weight:800">${fS(disponible)}</div><div style="font-size:11px;opacity:0.75;margin-top:2px">Puedes usar libremente</div></div>`;
-  if(!db.cobros)db.cobros=[];
-  const cM=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+c.monto,0); // ↑ ya suma todas las fuentes automáticamente
-  const cP=0;
+    <div class="hcard hc-m" style="margin:0">
+      <div style="font-size:11px;opacity:0.85;margin-bottom:2px">INGRESOS</div>
+      <div style="font-size:24px;font-weight:800">${fS(ing)}</div>
+      <div style="font-size:11px;opacity:0.75;margin-top:2px">este mes</div>
+    </div>
+    <div class="hcard hc-r" style="margin:0">
+      <div style="font-size:11px;opacity:0.7;margin-bottom:2px;color:var(--text2)">GASTOS</div>
+      <div style="font-size:24px;font-weight:800;color:var(--red)">${fS(gas)}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">este mes</div>
+    </div>
+    <div class="hcard hc-l" style="margin:0">
+      <div style="font-size:11px;opacity:0.85;margin-bottom:2px">BALANCE</div>
+      <div style="font-size:24px;font-weight:800">${fS(balance)}</div>
+      <div style="font-size:11px;opacity:0.75;margin-top:2px">${balance>=0?'✅ positivo':'⚠ déficit'}</div>
+    </div>`;
+
   document.getElementById('dash-m').innerHTML=[
-    {l:'Ingresos',v:fS(ing),c:'cg',s:'del mes'},{l:'Gastos',v:fS(gas),c:'cr',s:'del mes'},
-    {l:ahorro>=0?'Ahorro':'Déficit',v:fS(Math.abs(ahorro)),c:ahorro>=0?'cg':'cr',s:'del mes'},
-    {l:'Deudas',v:fS(deu),c:deu>0?'ca':'cg',s:'pendiente'},{l:'Me deben',v:fS(pre),c:'cp',s:'por cobrar'},
-    {l:'Consultorio',v:fS(cM),c:'cb',s:'generado'},{l:'Por generar',v:fS(cP),c:'cv',s:'consultorio'},
-    {l:'Patrimonio',v:fS(pat),c:'cp',s:'neto'},
+    {l:'Ingresos',v:fS(ing),c:'cg',s:'del mes'},
+    {l:'Gastos',v:fS(gas),c:'cr',s:'del mes'},
+    {l:balance>=0?'Ahorro':'Déficit',v:fS(Math.abs(balance)),c:balance>=0?'cg':'cr',s:'del mes'},
+    {l:'Gastos fijos',v:fS(totalFijos),c:'ca',s:'estimado/mes'},
+    {l:'Deudas',v:fS(totalDeudas),c:totalDeudas>0?'cr':'cg',s:'pendiente'},
   ].map(m=>`<div class="metric"><div class="ml">${m.l}</div><div class="mv ${m.c}">${m.v}</div><div class="ms">${m.s}</div></div>`).join('');
-  const dia=new Date().getDate(),diasMes=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
-  document.getElementById('dash-cons').innerHTML=`<div class="ct"><div class="ctl"><i class="ti ti-brain"></i>${getNombreFuente()} — este mes</div><button class="btn bgh bxs" onclick="go('consultorio')" style="color:var(--m1)">Ver →</button></div><div class="g2"><div class="metric"><div class="ml">Cobrado este mes</div><div class="mv cb">${fS(cM)}</div></div><div class="metric"><div class="ml">Cobros registrados</div><div class="mv cp">${db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).length}</div></div></div>`;  const prox=db.eventos.filter(e=>e.dia>=dia&&!e.pm[mes]).sort((a,b)=>a.dia-b.dia);
-  document.getElementById('dash-pp').innerHTML=prox.filter(e=>e.tipo==='fijo').slice(0,4).map(e=>{const d=e.dia-dia;const uc=d<=2?'br':d<=7?'ba':'bm';return`<div class="row"><div><strong>${e.nombre}</strong><div style="font-size:11px;color:var(--text3)">${e.resp}</div></div><div><span class="badge ${uc}">${d===0?'Hoy':d===1?'Mañana':'En '+d+'d'}</span>${e.monto?`<br><span class="neg">${fS(e.monto)}</span>`:''}</div></div>`;}).join('')||'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin pagos próximos ✨</p>';
-  document.getElementById('dash-pc').innerHTML=db.prestamos.filter(p=>p.saldo>0).slice(0,4).map(p=>`<div class="row"><div><strong>${p.deudor}</strong><div style="font-size:11px;color:var(--text3)">${p.prestador}</div></div><div class="pos">${fS(p.saldo)}</div></div>`).join('')||'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin cobros pendientes ✨</p>';
-  const r=dia>0?gas/dia:0,pG=r*diasMes,pA=ing-pG;
-  let txt=`Ritmo: <strong>${fS(r)}/día</strong>. Al cierre gastarías <strong>${fS(pG)}</strong>. `;
-  if(disponible>0)txt+=`Disponible ahora: <strong style="color:var(--green)">${fS(disponible)}</strong>. `;
-  txt+=pA>=0?`Ahorro estimado: <strong style="color:var(--green)">${fS(pA)}</strong> ✅`:`<strong style="color:var(--red)">⚠ Posible déficit ${fS(Math.abs(pA))}</strong>`;
-  document.getElementById('dash-proy').innerHTML=txt;
-  renderCharts();
+
+  // Gastos fijos de esta persona
+  document.getElementById('dash-cons').innerHTML=`
+    <div class="ct"><div class="ctl"><i class="ti ti-repeat"></i>Gastos fijos — ${icons[per]||'👤'} ${per}</div>
+    <button class="btn bgh bxs" onclick="go('fijos')" style="color:var(--m1)">Ver todos →</button></div>
+    ${fijos.length?fijos.sort((a,b)=>a.dia-b.dia).map(e=>{
+      const paid=e.pm[mes];
+      return`<div class="row">
+        <div><strong>${e.nombre}</strong>
+        <div style="font-size:11px;color:var(--text3)">Día ${e.dia} · ${freqLabel(e.freq||'mensual')}</div></div>
+        <div style="text-align:right">
+          <span class="neg">${fS(e.monto)}</span><br>
+          ${paid?'<span class="badge bg">✓ Pagado</span>':'<span class="badge br">Pendiente</span>'}
+        </div>
+      </div>`;}).join(''):'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin gastos fijos asignados</p>'}`;
+
+  // Deudas de esta persona
+  document.getElementById('dash-pp').innerHTML=deudas.length?deudas.map(d=>`
+    <div class="row">
+      <div><strong>${d.acreedor}</strong>
+      <div style="font-size:11px;color:var(--text3)">${d.prioridad}</div></div>
+      <div class="neg">${fS(d.saldo)}</div>
+    </div>`).join(''):'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin deudas ✨</p>';
+
+  // Últimos movimientos
+  const ultMovs=movs.sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,4);
+  document.getElementById('dash-pc').innerHTML=ultMovs.length?ultMovs.map(m=>`
+    <div class="row">
+      <div><strong>${m.categoria}</strong>
+      <div style="font-size:11px;color:var(--text3)">${m.fecha}</div></div>
+      <div class="${m.tipo==='ingreso'?'pos':'neg'}">${m.tipo==='ingreso'?'+':'-'}${fS(m.monto)}</div>
+    </div>`).join(''):'<p style="color:var(--text3);font-size:13px;padding:8px 0">Sin movimientos este mes</p>';
+
+  document.getElementById('dash-proy').innerHTML=`
+    <strong>${icons[per]||'👤'} ${per}</strong> — 
+    Ingresos: <strong class="cg">${fS(ing)}</strong> · 
+    Gastos: <strong class="cr">${fS(gas)}</strong> · 
+    Fijos estimados: <strong class="ca">${fS(totalFijos)}</strong> · 
+    Balance real: <strong class="${balance>=0?'cg':'cr'}">${fS(balance)}</strong>`;
+
+  document.getElementById('dash-sem').innerHTML='';
+  document.getElementById('dash-comp').innerHTML='';
+  // Ocultar charts en vista persona
+  const charts=document.querySelectorAll('#cG,#cM');
+  charts.forEach(c=>{if(c.parentElement)c.parentElement.parentElement.style.display='none';});
 }
 function renderAlerts(){
   const mes=getMes();const{ing,gas,deu,saldo,comprometido}=calcMes(mes);
