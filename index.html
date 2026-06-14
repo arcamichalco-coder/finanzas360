@@ -458,8 +458,40 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- FIJOS -->
 <div class="screen" id="screen-fijos">
-  <div class="sec-h"><span class="sec-ht"><i class="ti ti-repeat"></i> Gastos fijos</span><button class="btn bp bsm" onclick="go('calendario');setCalTab('n')"><i class="ti ti-plus"></i></button></div>
   <div class="g3" id="fijos-s" style="margin-bottom:12px"></div>
+
+  <!-- FORMULARIO NUEVO GASTO FIJO -->
+  <div class="card" id="fijos-form-card">
+    <div class="ct"><div class="ctl"><i class="ti ti-plus"></i> Nuevo gasto fijo</div>
+      <button class="btn bgh bxs" onclick="toggleFijosForm()" id="fijos-form-toggle" style="color:var(--m1)">+ Agregar</button>
+    </div>
+    <div id="fijos-form" style="display:none">
+      <div class="fg3">
+        <div class="fgrp"><label>Nombre</label><input type="text" id="nf-n" placeholder="Luz, Internet..."></div>
+        <div class="fgrp"><label>Monto (S/)</label><input type="number" id="nf-m" placeholder="0.00" step="0.01"></div>
+        <div class="fgrp"><label>Día del mes (1-31)</label><input type="number" id="nf-d" min="1" max="31" placeholder="5"></div>
+      </div>
+      <div class="fg3">
+        <div class="fgrp"><label>Responsable</label>
+          <select id="nf-r">
+            <option>Camila</option><option>Mamá</option><option>Compartido</option>
+          </select>
+        </div>
+        <div class="fgrp"><label>Frecuencia</label>
+          <select id="nf-f">
+            <option value="mensual">Mensual</option>
+            <option value="cada2">Cada 2 meses</option>
+            <option value="cada3">Cada 3 meses</option>
+            <option value="anual">Anual</option>
+          </select>
+        </div>
+        <div class="fgrp"><label>Categoría</label><input type="text" id="nf-c" placeholder="Servicios, Banco..."></div>
+      </div>
+      <div class="fgrp"><label>Nota</label><input type="text" id="nf-nt" placeholder="Observación..."></div>
+      <button class="btn bp bfw" onclick="guardarFijo()"><i class="ti ti-check"></i> Guardar gasto fijo</button>
+    </div>
+  </div>
+
   <div id="fijos-list"></div>
 </div>
 
@@ -581,7 +613,17 @@ function initDef(){
   if(!db.deudas.length)db.deudas=[{id:1,acreedor:'Tío 1',persona:'Camila',mi:500,saldo:500,prioridad:'Alta',nota:'',hist:[]},{id:2,acreedor:'Tío 2',persona:'Camila',mi:300,saldo:300,prioridad:'Media',nota:'',hist:[]}];
   if(!db.metas.length)db.metas=[{id:1,nombre:'Operación ocular',persona:'Camila',costo:2000,ahorro:0,aporte:200,fecha:'',pr:'Alta',nota:''},{id:2,nombre:'Tablet',persona:'Camila',costo:800,ahorro:0,aporte:100,fecha:'',pr:'Media',nota:''},{id:3,nombre:'Fondo emergencia',persona:'Camila',costo:1500,ahorro:0,aporte:150,fecha:'',pr:'Alta',nota:''},{id:4,nombre:'Cama',persona:'Mamá',costo:600,ahorro:0,aporte:80,fecha:'',pr:'Media',nota:''}];
   if(!db.fe.length)db.fe=[{persona:'Camila',monto:0,meta:1500},{persona:'Mamá',monto:0,meta:1000}];
-  if(!db.eventos.length)db.eventos=[{id:1,nombre:'Alquiler',tipo:'fijo',monto:0,dia:1,resp:'Mamá',cat:'Alquiler hogar',nota:'',pm:{}},{id:2,nombre:'Internet',tipo:'fijo',monto:0,dia:15,resp:'Ambas',cat:'Internet',nota:'',pm:{}},{id:3,nombre:'Luz',tipo:'fijo',monto:0,dia:20,resp:'Ambas',cat:'Luz',nota:'',pm:{}}];
+  if(!db.eventos.length)db.eventos=[
+  {id:1,nombre:'Internet',tipo:'fijo',monto:35,dia:5,resp:'Camila',cat:'Internet',nota:'',pm:{},freq:'mensual'},
+  {id:2,nombre:'Celular',tipo:'fijo',monto:30,dia:5,resp:'Camila',cat:'Celular',nota:'',pm:{},freq:'mensual'},
+  {id:3,nombre:'Colegiatura',tipo:'fijo',monto:45,dia:5,resp:'Camila',cat:'Colegiatura',nota:'',pm:{},freq:'cada3'},
+  {id:4,nombre:'Alquiler',tipo:'fijo',monto:250,dia:9,resp:'Mamá',cat:'Alquiler hogar',nota:'',pm:{},freq:'mensual'},
+  {id:5,nombre:'Banco préstamo',tipo:'fijo',monto:225,dia:20,resp:'Mamá',cat:'Banco',nota:'',pm:{},freq:'mensual'},
+  {id:6,nombre:'Luz',tipo:'fijo',monto:32,dia:20,resp:'Compartido',cat:'Servicios',nota:'',pm:{},freq:'mensual'},
+  {id:7,nombre:'Amazon',tipo:'fijo',monto:25,dia:18,resp:'Camila',cat:'Suscripciones',nota:'',pm:{},freq:'mensual'},
+  {id:8,nombre:'Gas',tipo:'fijo',monto:55,dia:20,resp:'Mamá',cat:'Servicios',nota:'',pm:{},freq:'cada2'},
+  {id:9,nombre:'Hera (baño)',tipo:'fijo',monto:60,dia:18,resp:'Camila',cat:'Mascota',nota:'',pm:{},freq:'cada3'},
+];
   if(!db.personas.length)db.personas=[{id:1,nombre:'Camila',alias:'Yo',relacion:'Personal',tipo:'Familiar'},{id:2,nombre:'Mamá',alias:'Mamá',relacion:'Familiar',tipo:'Familiar'}];
   if(!db.cuentas.length)db.cuentas=[{id:1,nombre:'Efectivo',saldo:0,tipo:'Efectivo'},{id:2,nombre:'Yape',saldo:0,tipo:'Digital'},{id:3,nombre:'BCP',saldo:0,tipo:'Banco'}];
   genNotifs();
