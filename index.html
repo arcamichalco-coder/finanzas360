@@ -229,7 +229,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <button class="ni" onclick="go('proyeccion')" id="ni-proyeccion"><i class="ti ti-trending-up"></i>Proyección</button>
 
     <div class="sb-sec">🧩 Trabajo</div>
-    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Tea Abrazo</button>
+    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Te Abrazo</button>
     <button class="ni" onclick="go('pacientes')" id="ni-pacientes"><i class="ti ti-user-heart"></i>Pacientes propios</button>
     <button class="ni" onclick="go('reportes-trabajo')" id="ni-reportes-trabajo"><i class="ti ti-chart-bar"></i>Reportes laborales</button>
 
@@ -786,7 +786,7 @@ function closeSB(){document.getElementById('sidebar').classList.remove('open');d
 function ingCons(mes){return db.pacientes.reduce((s,p)=>{const ses=(p.sesiones||[]).filter(se=>se.fecha&&se.fecha.startsWith(mes)&&se.estado==='realizada');const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+ses.length*g;},0);}
 function ingConsPend(){return db.pacientes.reduce((s,p)=>{const n=(p.sesiones||[]).filter(se=>se.estado==='pendiente').length;const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+n*g;},0);}
 
-const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Tea Abrazo',pacientes:'Pacientes Propios','reportes-trabajo':'Reportes Laborales',hogar:'Hogar Compartido',servicios:'Servicios',fijos:'Gastos Fijos',personas:'Personas',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};
+const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Te Abrazo',pacientes:'Pacientes Propios','reportes-trabajo':'Reportes Laborales',hogar:'Hogar Compartido',servicios:'Servicios',fijos:'Gastos Fijos',personas:'Personas',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};
 function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
