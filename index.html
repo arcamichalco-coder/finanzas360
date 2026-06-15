@@ -322,14 +322,44 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- ASISTENTE -->
 <div class="screen" id="screen-asistente">
-  <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-sparkles"></i>Análisis de tu situación</div></div><div id="ai-an"></div></div>
-  <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-calculator"></i>¿Cuánto puedo gastar libremente?</div></div><div id="ai-ah"></div></div>
+
+  <!-- Saludo inteligente -->
+  <div class="card" id="ai-saludo" style="margin-bottom:12px"></div>
+
+  <!-- Análisis automático -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct"><div class="ctl"><i class="ti ti-sparkles"></i>Análisis de tu situación</div></div>
+    <div id="ai-an"></div>
+  </div>
+
+  <!-- ¿Cuánto puedo gastar? -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct"><div class="ctl"><i class="ti ti-calculator"></i>¿Cuánto puedo gastar libremente?</div></div>
+    <div id="ai-ah"></div>
+  </div>
+
+  <!-- Metas -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct"><div class="ctl"><i class="ti ti-target"></i>Tus metas</div></div>
+    <div id="ai-metas"></div>
+  </div>
+
+  <!-- Resumen semanal -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct"><div class="ctl"><i class="ti ti-file-text"></i>Resumen semanal</div></div>
+    <div id="ai-sem"></div>
+  </div>
+
+  <!-- Pregunta libre -->
   <div class="card">
-    <div class="ct"><div class="ctl"><i class="ti ti-message-circle"></i>Hazme una pregunta</div></div>
-    <div style="display:flex;gap:8px"><input type="text" id="ai-inp" placeholder="¿Cuánto tengo? ¿Llegaré a fin de mes? ¿Quién no pagó?..."><button class="btn bp bsm" onclick="responder()" style="white-space:nowrap"><i class="ti ti-send"></i></button></div>
+    <div class="ct"><div class="ctl"><i class="ti ti-message-circle"></i>Pregúntame algo</div></div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="ai-inp" placeholder="¿Llegaré a fin de mes? ¿Cuándo cumplo mi meta?...">
+      <button class="btn bp bsm" onclick="responder()" style="white-space:nowrap"><i class="ti ti-send"></i></button>
+    </div>
     <div id="ai-resp" style="margin-top:10px"></div>
   </div>
-  <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-file-text"></i>Resumen semanal</div></div><div id="ai-sem"></div></div>
+
 </div>
 
 <!-- REGISTRAR -->
@@ -1641,38 +1671,189 @@ function renderRC(){const mes=document.getElementById('rc-mes')?.value||getMes()
 function renderRP(){const mes=document.getElementById('rp-mes')?.value||getMes();const el=document.getElementById('rp-ct');el.innerHTML='';['Camila','Mamá','Hogar'].forEach(per=>{const movs=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&m.persona===per);const ing=movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0),gas=movs.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0);el.innerHTML+=`<div class="card"><div style="font-weight:700;margin-bottom:8px">${per==='Camila'?'💚':per==='Mamá'?'🌸':'🏠'} ${per}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge bg">+${fS(ing)}</span><span class="badge br">-${fS(gas)}</span><span class="badge ${ing-gas>=0?'bm':'ba'}">${ing-gas>=0?'Ahorro':'Déficit'} ${fS(Math.abs(ing-gas))}</span></div></div>`;});}
 
 function renderAI(){
-  const mes=getMes();const{ing,gas,ahorro,deu,fijos,saldo,comprometido,disponible}=calcMes(mes);const sem=getSem(ing,gas,deu);
+  const mes=getMes();
+  const{ing,gas,ahorro,deu,fijos,saldo,comprometido,disponible}=calcMes(mes);
+  const hoy=new Date();
+  const hora=hoy.getHours();
+  const saludo=hora<12?'Buenos días':hora<18?'Buenas tardes':'Buenas noches';
+  const{pts}=calcSalud();
+  const emoji=pts>=80?'💚':pts>=60?'🌿':'⚠️';
+
+  // Saludo inteligente
+  const nombreMes=hoy.toLocaleDateString('es-PE',{month:'long'});
+  const diasRest=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate()-hoy.getDate();
+  let saludoTxt='';
+  if(pts>=80)saludoTxt=`¡Tus finanzas están en excelente forma! ${emoji} Salud financiera: <strong>${pts}/100</strong>.`;
+  else if(pts>=60)saludoTxt=`Vas bien, pero hay cosas por mejorar. ${emoji} Salud financiera: <strong>${pts}/100</strong>.`;
+  else saludoTxt=`Atención: tus finanzas necesitan cuidado. ${emoji} Salud financiera: <strong>${pts}/100</strong>.`;
+
+  document.getElementById('ai-saludo').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:36px">${emoji}</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px">${saludo} 👋</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.6">${saludoTxt}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">Quedan <strong>${diasRest} días</strong> en ${nombreMes}.</div>
+      </div>
+    </div>`;
+
+  // Análisis automático con lenguaje cálido
   const msgs=[];
-  if(sem==='r')msgs.push({c:'al-e',t:'⚠ Zona roja: gastos superan ingresos. Reduce gastos y prioriza deudas urgentes.'});
-  else if(sem==='a')msgs.push({c:'al-a',t:'⚡ Zona amarilla: ratio elevado. Revisa hormiga y recorta donde puedas.'});
-  else msgs.push({c:'al-g',t:'✨ Finanzas saludables. ¡Buen trabajo! Sigue aportando a tus metas.'});
+  const sem=getSem(ing,gas,deu);
+
+  if(sem==='v')msgs.push({c:'al-g',t:'✨ ¡Buen trabajo! Este mes tus ingresos superan tus gastos.'});
+  else if(sem==='a')msgs.push({c:'al-a',t:'⚡ Atención: estás gastando más de lo recomendado. Revisa tus gastos pequeños.'});
+  else msgs.push({c:'al-e',t:'⚠️ Tus gastos superan tus ingresos este mes. Prioriza pagar lo esencial.'});
+
+  if(ing>0){
+    const pctFijos=fijos/ing*100;
+    if(pctFijos>50)msgs.push({c:'al-e',t:`⚠️ Tus gastos fijos representan el <strong>${pctFijos.toFixed(0)}%</strong> de tus ingresos — es muy alto.`});
+    else if(pctFijos>40)msgs.push({c:'al-a',t:`⚡ Tus gastos fijos son el <strong>${pctFijos.toFixed(0)}%</strong> de tus ingresos. Intenta reducirlos.`});
+    else msgs.push({c:'al-g',t:`✅ Tus gastos fijos son el <strong>${pctFijos.toFixed(0)}%</strong> de tus ingresos — manejable.`});
+  }
+
+  // Comparativa con mes anterior
+  const ms=getLast6();const prevM=ms[ms.length-2];
+  if(prevM){
+    const pt=calcMes(prevM);
+    const dG=gas-pt.gas;
+    if(pt.gas>0&&dG>0)msgs.push({c:'al-a',t:`📈 Este mes gastas <strong>${((dG/pt.gas)*100).toFixed(0)}% más</strong> que el mes pasado. ¿Sabes por qué?`});
+    else if(pt.gas>0&&dG<0)msgs.push({c:'al-g',t:`📉 ¡Excelente! Gastas <strong>${(Math.abs(dG/pt.gas)*100).toFixed(0)}% menos</strong> que el mes pasado.`});
+    const dA=ahorro-pt.ahorro;
+    if(dA>0)msgs.push({c:'al-g',t:`💰 Ahorraste <strong>${fS(dA)} más</strong> que el mes pasado. ¡Sigue así!`});
+  }
+
+  // Deudas
+  if(deu>0&&ing>0){
+    const mesesDeu=Math.ceil(deu/(ahorro>0?ahorro:1));
+    msgs.push({c:'al-a',t:`💳 Con tu ahorro actual, podrías saldar tus deudas en aproximadamente <strong>${mesesDeu} mes(es)</strong>.`});
+  }else if(deu===0){
+    msgs.push({c:'al-g',t:'🎉 ¡Sin deudas! Eso es increíble. Mantén ese hábito.'});
+  }
+
+  // Gastos hormiga
   const horm=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&HC.includes(m.categoria)).reduce((s,m)=>s+m.monto,0);
-  if(horm>100)msgs.push({c:'al-a',t:`🐜 Hormiga: ${fS(horm)} este mes. Reducir S/ 50/sem = ${fS(50*52/12)} más al año.`});
-  const cM=ingCons(mes);if(cM>0)msgs.push({c:'al-m',t:`🧠 Consultorio: ${fS(cM)} generado. Por generar: ${fS(ingConsPend())}.`});
-  if(comprometido>0)msgs.push({c:'al-m',t:`🔒 ${fS(comprometido)} comprometidos. Disponible real: ${fS(disponible)}.`});
-  if(!db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)).length)msgs.push({c:'al-m',t:'💡 Sin movimientos. Empieza registrando tus ingresos.'});
-  document.getElementById('ai-an').innerHTML=msgs.map(m=>`<div class="al ${m.c}"><span>${m.t}</span></div>`).join('');
-  const libre=ing-fijos,aM=db.metas.reduce((s,m)=>s+m.aporte,0),aR=Math.max(0,libre*0.2),disp=libre-aM-aR;
-  document.getElementById('ai-ah').innerHTML=ing===0?'<p style="color:var(--text3)">Registra ingresos para ver este análisis.</p>':`<div class="g4" style="margin-bottom:10px"><div class="metric"><div class="ml">Ingresos</div><div class="mv cg">+${fS(ing)}</div></div><div class="metric"><div class="ml">Fijos</div><div class="mv cr">-${fS(fijos)}</div></div><div class="metric"><div class="ml">Aportes metas</div><div class="mv ca">-${fS(aM)}</div></div><div class="metric"><div class="ml">Ahorro recom. 20%</div><div class="mv cp">-${fS(aR)}</div></div></div><div class="al al-g"><span><strong>💰 Para gastar libremente: ${fS(Math.max(0,disp))}</strong> · Saldo: ${fS(saldo)} · Disponible real: ${fS(disponible)}</span></div>`;
-  const hoy=new Date(),gS=db.movimientos.filter(m=>{if(!m.fecha||m.tipo!=='gasto')return false;return(hoy-new Date(m.fecha))/86400000<=7;}),tS=gS.reduce((s,m)=>s+m.monto,0);
-  const tC={};gS.forEach(m=>{tC[m.categoria]=(tC[m.categoria]||0)+m.monto;});const top=Object.entries(tC).sort((a,b)=>b[1]-a[1])[0];
-  const gSA=db.movimientos.filter(m=>{if(!m.fecha||m.tipo!=='gasto')return false;const d=(hoy-new Date(m.fecha))/86400000;return d>7&&d<=14;}),tSA=gSA.reduce((s,m)=>s+m.monto,0);
-  let txt=tS>0?`Esta semana: <strong>${fS(tS)}</strong>. Mayor: <strong>${top?.[0]||'—'}</strong> (${fS(top?.[1]||0)}). `:'Sin gastos esta semana. ';
-  if(tSA>0){const d=tS-tSA;txt+=d>0?`<span style="color:var(--red)">↑ ${fS(d)} más que la semana pasada.</span>`:`<span style="color:var(--green)">↓ ${fS(Math.abs(d))} menos. ¡Bien!</span>`;}
-  document.getElementById('ai-sem').innerHTML=`<div class="ai-msg">${txt}</div>`;
+  if(horm>0&&ing>0){
+    const pctH=horm/ing*100;
+    if(pctH>10)msgs.push({c:'al-a',t:`🐜 Gastos pequeños: <strong>${fS(horm)}</strong> este mes (${pctH.toFixed(0)}% de tus ingresos). Pequeños montos suman mucho.`});
+  }
+
+  document.getElementById('ai-an').innerHTML=msgs.slice(0,4).map(m=>`<div class="al ${m.c}" style="margin-bottom:6px"><span>${m.t}</span></div>`).join('');
+
+  // ¿Cuánto puedo gastar?
+  const libre=ing-fijos;
+  const aM=db.metas.reduce((s,m)=>s+m.aporte,0);
+  const aR=Math.max(0,libre*0.2);
+  const disp=Math.max(0,libre-aM-aR);
+  document.getElementById('ai-ah').innerHTML=ing===0?
+    '<p style="color:var(--text3);font-size:13px">Registra tus ingresos para ver este análisis.</p>':
+    `<div class="g3" style="margin-bottom:10px">
+      <div class="metric"><div class="ml">Ingresos</div><div class="mv cg">${fS(ing)}</div></div>
+      <div class="metric"><div class="ml">Gastos fijos</div><div class="mv cr">-${fS(fijos)}</div></div>
+      <div class="metric"><div class="ml">Ahorro recom.</div><div class="mv ca">-${fS(aR)}</div></div>
+    </div>
+    <div class="al al-g"><span>💰 Puedes gastar libremente: <strong>${fS(disp)}</strong> · Disponible real en cuentas: <strong>${fS(disponible)}</strong></span></div>`;
+
+  // Metas con proyección
+  const metasActivas=db.metas.filter(m=>m.ahorro<m.costo);
+  document.getElementById('ai-metas').innerHTML=metasActivas.length?
+    metasActivas.slice(0,3).map(m=>{
+      const falt=m.costo-m.ahorro;
+      const mesesMeta=m.aporte>0?Math.ceil(falt/m.aporte):null;
+      const fechaMeta=mesesMeta?new Date(new Date().setMonth(new Date().getMonth()+mesesMeta)).toLocaleDateString('es-PE',{month:'long',year:'numeric'}):null;
+      const pct=Math.min(100,(m.ahorro/m.costo)*100);
+      return`<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-weight:600;font-size:13px">🎯 ${m.nombre}</span>
+          <span style="font-size:12px;color:var(--text3)">${fS(m.ahorro)} / ${fS(m.costo)}</span>
+        </div>
+        <div class="prog"><div class="pf ${pct>=75?'pg':pct>=40?'pa':'pm'}" style="width:${pct.toFixed(0)}%"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">
+          ${fechaMeta?`Si aportas ${fS(m.aporte)}/mes, la alcanzarías en <strong style="color:var(--m1)">${fechaMeta}</strong>.`:`Faltan ${fS(falt)}.`}
+        </div>
+      </div>`;
+    }).join(''):
+    '<p style="color:var(--text3);font-size:13px">No tienes metas activas. <a onclick="go(\'metas\')" style="color:var(--m1);cursor:pointer">Crear una →</a></p>';
+
+  // Resumen semanal
+  const gS=db.movimientos.filter(m=>{if(!m.fecha||m.tipo!=='gasto')return false;return(hoy-new Date(m.fecha))/86400000<=7;});
+  const tS=gS.reduce((s,m)=>s+m.monto,0);
+  const gSA=db.movimientos.filter(m=>{if(!m.fecha||m.tipo!=='gasto')return false;const d=(hoy-new Date(m.fecha))/86400000;return d>7&&d<=14;});
+  const tSA=gSA.reduce((s,m)=>s+m.monto,0);
+  const tC={};gS.forEach(m=>{tC[m.categoria]=(tC[m.categoria]||0)+m.monto;});
+  const top=Object.entries(tC).sort((a,b)=>b[1]-a[1])[0];
+  const diff=tS-tSA;
+  let semTxt='';
+  if(tS===0)semTxt='Sin gastos esta semana. ¡Excelente control!';
+  else{
+    semTxt=`Esta semana gastaste <strong>${fS(tS)}</strong>. `;
+    if(top)semTxt+=`Tu mayor gasto fue <strong>${top[0]}</strong> (${fS(top[1])}). `;
+    if(tSA>0)semTxt+=diff>0?`<span style="color:var(--red)">Gastaste ${fS(diff)} más que la semana pasada.</span>`:`<span style="color:var(--green)">Gastaste ${fS(Math.abs(diff))} menos que la semana pasada. ¡Bien!</span>`;
+  }
+  document.getElementById('ai-sem').innerHTML=`<div class="ai-msg">${semTxt}</div>`;
 }
 function responder(){
-  const inp=document.getElementById('ai-inp').value.trim();if(!inp)return;
-  const{ing,gas,ahorro,deu,saldo,comprometido,disponible,fijos}=calcMes(getMes());const q=inp.toLowerCase();let resp='';
-  if(q.includes('disponible')||q.includes('puedo gastar'))resp=`💰 Tienes <strong>${fS(disponible)}</strong> disponibles realmente. Saldo: ${fS(saldo)} - Comprometido: ${fS(comprometido)}.`;
-  else if(q.includes('comprometido'))resp=`🔒 Comprometidos: <strong>${fS(comprometido)}</strong>. Deudas: ${fS(deu)} + Fijos: ${fS(fijos)}.`;
-  else if(q.includes('saldo')||q.includes('cuánto tengo')||q.includes('cuanto tengo'))resp=`🏦 Saldo total: <strong>${fS(saldo)}</strong>. ${db.cuentas.map(c=>`${c.nombre}: ${fS(c.saldo)}`).join(' · ')}`;
-  else if(q.includes('deben')||q.includes('cobrar'))resp=`🤝 Te deben: <strong>${fS(db.prestamos.reduce((s,p)=>s+p.saldo,0))}</strong> en total.`;
-  else if(q.includes('fin de mes')||q.includes('llegaré')||q.includes('llegare')){const dia=new Date().getDate(),diasMes=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate(),r=dia>0?gas/dia:0,pG=r*diasMes,pA=ing-pG;resp=pA>=0?`✅ <strong>Sí llegarás.</strong> Ahorro estimado: ${fS(pA)}. Ritmo: ${fS(r)}/día.`:`⚠ <strong>Cuidado.</strong> Posible déficit de ${fS(Math.abs(pA))} a este ritmo.`;}
-  else if(q.includes('consultorio')||q.includes('quincena'))resp=`🧠 Consultorio este mes: <strong>${fS(ingCons(getMes()))}</strong>. Por generar: <strong>${fS(ingConsPend())}</strong>.`;
-  else if(q.includes('internet')||q.includes('quién')||q.includes('quien')){const pend=db.serv_o.flatMap(s=>s.personas.filter(p=>!p.pm[getMes()]).map(p=>`${p.nombre} (${s.nombre})`));resp=pend.length?`📺 Pendientes: <strong>${pend.join(', ')}</strong>.`:'✅ Todos pagaron este mes.';}
-  else{const num=inp.match(/(\d[\d.,]*)/);const mn=num?parseFloat(num[0].replace(',','.')):0;if(mn>0){const libre=ahorro-mn;if(libre>=0&&deu===0)resp=`✅ <strong>Sí puedes.</strong> Quedarían ${fS(libre)} de ahorro.`;else if(libre>=0&&deu>0)resp=`⚡ <strong>Podrías, con cuidado.</strong> Tienes deudas de ${fS(deu)}.`;else resp=`⚠ <strong>No recomendado.</strong> Déficit de ${fS(Math.abs(libre))}.`;}else resp='Pregúntame: ¿Cuánto tengo disponible? ¿Llegaré a fin de mes? ¿Quién no pagó el internet? ¿Cuánto del consultorio?';}
-  document.getElementById('ai-resp').innerHTML=`<div class="ai-msg">${resp}</div>`;document.getElementById('ai-inp').value='';
+  const inp=document.getElementById('ai-inp').value.trim();
+  if(!inp)return;
+  const{ing,gas,ahorro,deu,saldo,comprometido,disponible,fijos}=calcMes(getMes());
+  const q=inp.toLowerCase();
+  let resp='';
+
+  if(q.includes('disponible')||q.includes('puedo gastar')||q.includes('tengo libre'))
+    resp=`💰 Tienes <strong>${fS(disponible)}</strong> disponibles realmente. Saldo total: ${fS(saldo)}, comprometido: ${fS(comprometido)}.`;
+  else if(q.includes('saldo')||q.includes('cuánto tengo')||q.includes('cuanto tengo'))
+    resp=`🏦 Saldo total: <strong>${fS(saldo)}</strong>. ${db.cuentas.map(c=>`${c.nombre}: ${fS(c.saldo)}`).join(' · ')}`;
+  else if(q.includes('deben')||q.includes('cobrar')||q.includes('me deben'))
+    resp=`🤝 Te deben: <strong>${fS(db.prestamos.reduce((s,p)=>s+p.saldo,0))}</strong> en total.`;
+  else if(q.includes('fin de mes')||q.includes('llegaré')||q.includes('llegare')||q.includes('alcanza')){
+    const dia=new Date().getDate(),diasMes=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+    const r=dia>0?gas/dia:0,pG=r*diasMes,pA=ing-pG;
+    resp=pA>=0?`✅ Sí llegarás. Ahorro estimado al cierre: <strong>${fS(pA)}</strong>. Estás gastando ${fS(r)}/día.`
+      :`⚠️ Cuidado. A este ritmo (${fS(r)}/día) tendrías un déficit de <strong>${fS(Math.abs(pA))}</strong>.`;
+  }
+  else if(q.includes('meta')||q.includes('objetivo')){
+    const m=db.metas.find(x=>x.ahorro<x.costo);
+    if(m){const falt=m.costo-m.ahorro;const mes=m.aporte>0?Math.ceil(falt/m.aporte):null;
+      resp=`🎯 Tu meta más cercana es <strong>${m.nombre}</strong>. Faltan ${fS(falt)}. ${mes?`A este ritmo la alcanzarías en ~${mes} mes(es).`:''}`;}
+    else resp='🎉 ¡Todas tus metas están completadas!';
+  }
+  else if(q.includes('deuda')||q.includes('debo')){
+    const tot=db.deudas.reduce((s,d)=>s+d.saldo,0);
+    const meses=ahorro>0?Math.ceil(tot/ahorro):null;
+    resp=tot>0?`💳 Debes <strong>${fS(tot)}</strong> en total. ${meses?`Con tu ahorro actual (~${fS(ahorro)}/mes), podrías saldarlas en ~${meses} mes(es).`:''}`
+      :'✅ ¡Sin deudas! Sigue así.';
+  }
+  else if(q.includes('ahorr')){
+    const pct=ing>0?(ahorro/ing*100).toFixed(0):0;
+    resp=ahorro>0?`💚 Este mes ahorras <strong>${fS(ahorro)}</strong> (${pct}% de tus ingresos). ${pct>=20?'¡Excelente!':pct>=10?'Bien, pero puedes mejorar.':'Intenta llegar al 20%.'}`:
+      `⚠️ Este mes no tienes ahorro positivo. Revisa tus gastos.`;
+  }
+  else if(q.includes('trabajo')||q.includes('cobr')||q.includes('abrazo')){
+    if(!db.cobros)db.cobros=[];
+    const cM=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(getMes())).reduce((s,c)=>s+c.monto,0);
+    resp=`🧩 Este mes has cobrado <strong>${fS(cM)}</strong> de ${getNombreFuente()}.`;
+  }
+  else if(q.includes('gasto fijo')||q.includes('fijos')){
+    resp=`📋 Tus gastos fijos suman <strong>${fS(fijos)}</strong>/mes. ${ing>0?`Representan el ${(fijos/ing*100).toFixed(0)}% de tus ingresos.`:''}`;
+  }
+  else if(q.includes('internet')||q.includes('quién')||q.includes('quien')||q.includes('pagó')){
+    const pend=db.serv_o.flatMap(s=>s.personas.filter(p=>!p.pm[getMes()]).map(p=>`${p.nombre} (${s.nombre})`));
+    resp=pend.length?`📺 Pendientes de pago: <strong>${pend.join(', ')}</strong>.`:'✅ Todos pagaron este mes.';
+  }
+  else{
+    const num=inp.match(/(\d[\d.,]*)/);
+    const mn=num?parseFloat(num[0].replace(',','.')):0;
+    if(mn>0){
+      const libre=ahorro-mn;
+      resp=libre>=0&&deu===0?`✅ Puedes. Quedarían ${fS(libre)} de ahorro.`
+        :libre>=0&&deu>0?`⚡ Podrías, pero tienes deudas de ${fS(deu)}. Considera pagarlas primero.`
+        :`⚠️ No es recomendable ahora. Tendrías un déficit de ${fS(Math.abs(libre))}.`;
+    }else{
+      resp='Puedo responder preguntas como: ¿Cuánto tengo disponible? ¿Llegaré a fin de mes? ¿Cuándo cumpliré mi meta? ¿Cuánto debo? ¿Cuánto ahorré?';
+    }
+  }
+  document.getElementById('ai-resp').innerHTML=`<div class="ai-msg">${resp}</div>`;
+  document.getElementById('ai-inp').value='';
 }
 
 function setAT(t){
