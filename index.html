@@ -1557,6 +1557,7 @@ function renderCC(){
     if(personasAct.includes(valActual))perSel.value=valActual;
   }
   const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value;
+  }
 function renderSC(){const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value,cat=document.getElementById('cfg-cs')?.value;const subs=cat?((db.subcats[tp]||{})[per]||{})[cat]||[]:[];document.getElementById('cfg-subs').innerHTML=subs.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--r3);border:1.5px solid var(--r1);margin:3px;color:#c45a80">${s} <span style="color:var(--red);cursor:pointer;margin-left:2px" onclick="delSub('${tp}','${per}','${cat.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}')" >×</span></span>`).join('');}
 function addCat(){const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value,v=document.getElementById('cfg-nc').value.trim();if(!v)return;if(!db.cats[tp][per])db.cats[tp][per]=[];if(db.cats[tp][per].includes(v)){toast('Ya existe');return;}db.cats[tp][per].push(v);save();document.getElementById('cfg-nc').value='';renderCC();updateCats();toast('✓ Añadida');}
 function delCat(tp,per,c){db.cats[tp][per]=db.cats[tp][per].filter(x=>x!==c);save();renderCC();updateCats();}
