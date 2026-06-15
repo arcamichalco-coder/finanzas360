@@ -225,7 +225,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <button class="ni" onclick="go('emergencia')" id="ni-emergencia"><i class="ti ti-shield"></i>Fondo Emergencia</button>
     <button class="ni" onclick="go('proyeccion')" id="ni-proyeccion"><i class="ti ti-trending-up"></i>Proyección</button>
     <div class="sb-sec">Consultorio</div>
-    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Tea Abrazo</button>
+    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Te Abrazo</button>
     <div class="sb-sec">Hogar y Servicios</div>
     <button class="ni" onclick="go('hogar')" id="ni-hogar"><i class="ti ti-home"></i>Hogar Compartido</button>
     <button class="ni" onclick="go('servicios')" id="ni-servicios"><i class="ti ti-device-tv"></i>Servicios</button>
@@ -450,7 +450,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
   <!-- Nombre fuente activa + acciones -->
   <div class="card" style="margin-bottom:12px">
     <div class="ct">
-      <div class="ctl"><i class="ti ti-building"></i><span id="fuente-nombre-lbl">Tea Abrazo</span></div>
+      <div class="ctl"><i class="ti ti-building"></i><span id="fuente-nombre-lbl">Te Abrazo</span></div>
       <div style="display:flex;gap:6px">
         <button class="btn bgh bxs" onclick="editarNombreFuente()" style="color:var(--m1)"><i class="ti ti-pencil"></i> Editar</button>
         <button class="btn bgh bxs" onclick="eliminarFuente()" style="color:var(--red)"><i class="ti ti-trash"></i></button>
@@ -991,9 +991,9 @@ function elimP(id){db.prestamos=db.prestamos.filter(p=>p.id!==id);save();renderP
 function guardarFE(){const per=document.getElementById('fe-per').value,mn=parseFloat(document.getElementById('fe-mn').value)||0,mt=parseFloat(document.getElementById('fe-mt').value)||0;const ex=db.fe.find(f=>f.persona===per);if(ex){ex.monto=mn;ex.meta=mt;}else{db.fe.push({persona:per,monto:mn,meta:mt});}save();renderFE();toast('✓ Actualizado');}
 function renderFE(){const tot=db.fe.reduce((s,f)=>s+f.monto,0);const{gas}=calcMes(getMes());const mc=gas>0?(tot/gas).toFixed(1):0;document.getElementById('fe-tot').textContent=fS(tot);document.getElementById('fe-mes').textContent=`Cubre aprox. ${mc} mes(es) de gastos`;['Camila','Mamá'].forEach(per=>{const f=db.fe.find(x=>x.persona===per)||{monto:0,meta:1000};const pct=f.meta>0?Math.min(100,(f.monto/f.meta)*100):0;const fc=pct>=75?'pg':pct>=40?'pa':'pm';const k=per==='Camila'?'c':'m';document.getElementById(`fe-${k}`).innerHTML=`<div style="font-size:20px;font-weight:800;color:var(--m1)">${fS(f.monto)}</div><div class="prog"><div class="pf ${fc}" style="width:${pct.toFixed(0)}%"></div></div><div style="font-size:11px;color:var(--text3)">${pct.toFixed(0)}% de ${fS(f.meta)}</div>`;});}
 
-// ── TEA ABRAZO + MÚLTIPLES FUENTES ────────────────────────────────────────
+// ── Te Abrazo + MÚLTIPLES FUENTES ────────────────────────────────────────
 function initFuentes(){
-  if(!db.fuentes)db.fuentes=[{id:1,nombre:'Tea Abrazo'}];
+  if(!db.fuentes)db.fuentes=[{id:1,nombre:'Te Abrazo'}];
   if(!db.cobros)db.cobros=[];
   if(!db.fuenteActiva)db.fuenteActiva=db.fuentes[0].id;
 }
@@ -1004,9 +1004,9 @@ function getFuenteActiva(){
 function getNombreFuente(){
   if(db.fuentes&&db.fuentes.length){
     const f=getFuenteActiva();
-    return f?f.nombre:'Tea Abrazo';
+    return f?f.nombre:'Te Abrazo';
   }
-  return db.nombreFuente||'Tea Abrazo';
+  return db.nombreFuente||'Te Abrazo';
 }
 function renderFuentesTabs(){
   initFuentes();
