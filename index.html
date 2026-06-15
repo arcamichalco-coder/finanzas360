@@ -277,6 +277,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-chart-pie"></i>Gastos del mes</div></div><div style="position:relative;height:175px"><canvas id="cG"></canvas></div></div>
     <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-chart-bar"></i>Últimos 6 meses</div></div><div style="position:relative;height:175px"><canvas id="cM"></canvas></div></div>
   </div>
+  <div class="card" id="dash-salud" style="margin-bottom:12px"></div>
   <div class="card" id="dash-cons"></div>
   <div class="g2" style="margin-bottom:12px">
     <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-receipt"></i>Próximos pagos</div></div><div id="dash-pp"></div></div>
@@ -791,6 +792,7 @@ function renderDash(){
     if(disponible>0)txt+=`Disponible ahora: <strong style="color:var(--green)">${fS(disponible)}</strong>. `;
     txt+=pA>=0?`Ahorro estimado: <strong style="color:var(--green)">${fS(pA)}</strong> ✅`:`<strong style="color:var(--red)">⚠ Posible déficit ${fS(Math.abs(pA))}</strong>`;
     document.getElementById('dash-proy').innerHTML=txt;
+    renderSalud();
     renderCharts();
   } else {
     renderDashPersona(DT,mes);
@@ -898,6 +900,65 @@ function renderDashPersona(per,mes){
   // Ocultar charts en vista persona
   const charts=document.querySelectorAll('#cG,#cM');
   charts.forEach(c=>{if(c.parentElement)c.parentElement.parentElement.style.display='none';});
+}
+function calcSalud(){
+  const mes=getMes();
+  const{ing,gas,ahorro,deu}=calcMes(mes);
+  const fijos=db.eventos.filter(e=>e.tipo==='fijo');
+  const pagados=fijos.filter(e=>e.pm[mes]).length;
+  const metas=db.metas.filter(m=>m.ahorro<m.costo).length;
+  let pts=0;const tips=[];
+
+  // 1. Ingresos vs gastos (15pts)
+  if(ing>0&&gas/ing<=0.5){pts+=15;tips.push({c:'al-g',t:'✅ Gastas menos del 50% de tus ingresos'});}
+  else if(ing>0&&gas/ing<=0.8){pts+=8;tips.push({c:'al-a',t:'⚡ Gastas entre 50-80% de tus ingresos'});}
+  else{pts+=0;tips.push({c:'al-e',t:'⚠️ Tus gastos superan el 80% de ingresos'});}
+
+  // 2. Ahorros (25pts)
+  const ahorroReal=ing>0?(ahorro/ing)*100:0;
+  if(ahorroReal>=20){pts+=25;tips.push({c:'al-g',t:'✅ Ahorras más del 20% — excelente'});}
+  else if(ahorroReal>=10){pts+=15;tips.push({c:'al-a',t:'⚡ Ahorras entre 10-20% — puedes mejorar'});}
+  else if(ahorroReal>0){pts+=5;tips.push({c:'al-a',t:'⚡ Ahorras menos del 10% — intenta aumentarlo'});}
+  else{pts+=0;tips.push({c:'al-e',t:'⚠️ Sin ahorro este mes'});}
+
+  // 3. Deudas (25pts)
+  if(deu===0){pts+=25;tips.push({c:'al-g',t:'✅ Sin deudas — ¡increíble!'});}
+  else if(ing>0&&deu/ing<=1){pts+=15;tips.push({c:'al-a',t:'⚡ Deudas manejables vs tus ingresos'});}
+  else{pts+=0;tips.push({c:'al-e',t:'⚠️ Deudas altas — prioriza pagarlas'});}
+
+  // 4. Gastos fijos pagados (20pts)
+  if(fijos.length===0){pts+=20;}
+  else{const pct=pagados/fijos.length;
+    if(pct>=0.8){pts+=20;tips.push({c:'al-g',t:`✅ ${pagados}/${fijos.length} gastos fijos pagados`});}
+    else if(pct>=0.5){pts+=10;tips.push({c:'al-a',t:`⚡ ${pagados}/${fijos.length} gastos fijos pagados`});}
+    else{pts+=0;tips.push({c:'al-e',t:`⚠️ Solo ${pagados}/${fijos.length} gastos fijos pagados`});}}
+
+  // 5. Metas activas (15pts)
+  if(metas>0){pts+=15;tips.push({c:'al-g',t:`🎯 ${metas} meta(s) activa(s) en progreso`});}
+  else{tips.push({c:'al-m',t:'💡 Crea metas para mejorar tu puntuación'});}
+
+  return{pts,tips};
+}
+function renderSalud(){
+  const{pts,tips}=calcSalud();
+  const color=pts>=80?'var(--green)':pts>=60?'var(--amber)':'var(--red)';
+  const emoji=pts>=80?'💚':pts>=60?'🍂':'⚠️';
+  const label=pts>=80?'Excelente':pts>=60?'Buena':pts>=40?'Regular':'Necesita atención';
+  const pct=pts;
+  const el=document.getElementById('dash-salud');
+  if(!el)return;
+  el.innerHTML=`
+    <div class="ct"><div class="ctl"><i class="ti ti-heart"></i>Salud financiera</div>
+    <span style="font-size:20px;font-weight:800;color:${color}">${emoji} ${pts}/100</span></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="flex:1">
+        <div class="prog" style="height:12px">
+          <div class="pf ${pts>=80?'pg':pts>=60?'pa':'prd'}" style="width:${pct}%"></div>
+        </div>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:${color}">${label}</span>
+    </div>
+    ${tips.slice(0,3).map(t=>`<div class="al ${t.c}" style="margin-bottom:5px"><span>${t.t}</span></div>`).join('')}`;
 }
 function renderAlerts(){
   const mes=getMes();const{ing,gas,deu,saldo,comprometido}=calcMes(mes);
