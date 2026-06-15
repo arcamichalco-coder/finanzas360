@@ -655,6 +655,7 @@ function initDef(){
   {id:7,nombre:'Amazon',tipo:'fijo',monto:25,dia:18,resp:'Camila',cat:'Suscripciones',nota:'',pm:{},freq:'mensual'},
   {id:8,nombre:'Gas',tipo:'fijo',monto:55,dia:20,resp:'Mamá',cat:'Servicios',nota:'',pm:{},freq:'cada2'},
   {id:9,nombre:'Hera (baño)',tipo:'fijo',monto:60,dia:18,resp:'Camila',cat:'Mascota',nota:'',pm:{},freq:'cada3'},
+  {id:10,nombre:'Aporte a Mamá',tipo:'fijo',monto:113,dia:9,resp:'Camila',cat:'Aporte a Mamá',nota:'Para cubrir déficit del hogar',pm:{},freq:'mensual',aporteMama:true},
 ];
   if(!db.personas.length)db.personas=[{id:1,nombre:'Camila',alias:'Yo',relacion:'Personal',tipo:'Familiar'},{id:2,nombre:'Mamá',alias:'Mamá',relacion:'Familiar',tipo:'Familiar'}];
   if(!db.cuentas.length)db.cuentas=[{id:1,nombre:'Efectivo',saldo:0,tipo:'Efectivo'},{id:2,nombre:'Yape',saldo:0,tipo:'Digital'},{id:3,nombre:'BCP',saldo:0,tipo:'Banco'}];
@@ -1317,7 +1318,18 @@ function renderFijos(){
   if(!fijos.length)html='<div class="empty"><i class="ti ti-repeat"></i>Sin gastos fijos. Agrega uno arriba.</div>';
   document.getElementById('fijos-list').innerHTML=html;
 }
-function mkPaid(id,mk,undo=false){const e=db.eventos.find(x=>x.id===id);if(!e)return;e.pm[mk]=!undo;if(!undo&&e.monto>0)db.movimientos.push({id:Date.now(),fecha:new Date().toISOString().split('T')[0],tipo:'gasto',persona:e.resp==='Ambas'?'Camila':e.resp,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Fijo registrado desde calendario'});save();renderFijos();renderCal();toast(undo?'Desmarcado':'✓ Registrado');}
+function mkPaid(id,mk,undo=false){
+  const e=db.eventos.find(x=>x.id===id);if(!e)return;
+  e.pm[mk]=!undo;
+  if(!undo&&e.monto>0){
+    db.movimientos.push({id:Date.now(),fecha:new Date().toISOString().split('T')[0],tipo:'gasto',persona:e.resp==='Ambas'?'Camila':e.resp,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Fijo registrado desde calendario'});
+    // Si es un "Aporte a Mamá", generar también el ingreso espejo para Mamá
+    if(e.cat==='Aporte a Mamá'||e.aporteMama){
+      db.movimientos.push({id:Date.now()+1,fecha:new Date().toISOString().split('T')[0],tipo:'ingreso',persona:'Mamá',categoria:'Aporte de Camila',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Aporte recibido de Camila (automático)'});
+    }
+  }
+  save();renderFijos();renderCal();toast(undo?'Desmarcado':'✓ Registrado');
+}
 function elimEv(id){db.eventos=db.eventos.filter(e=>e.id!==id);save();renderFijos();renderCal();}
 
 function openNPer(){openMod(`<div class="mt2"><span>👤 Nueva persona</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div class="fg2"><div class="fgrp"><label>Nombre</label><input type="text" id="pp-n"></div><div class="fgrp"><label>Alias</label><input type="text" id="pp-a"></div></div><div class="fg2"><div class="fgrp"><label>Relación</label><input type="text" id="pp-r" placeholder="Amiga, Colega..."></div><div class="fgrp"><label>Tipo</label><select id="pp-t"><option>Familiar</option><option>Cliente</option><option>Acreedor</option><option>Deudor</option><option>Arrendador</option><option>Otro</option></select></div></div><div class="fgrp"><label>Teléfono</label><input type="text" id="pp-tel"></div><button class="btn bp bfw" onclick="guardarPer()"><i class="ti ti-check"></i> Guardar</button>`);}
