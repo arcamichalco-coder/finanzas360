@@ -578,7 +578,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <div class="ct"><div class="ctl"><i class="ti ti-category"></i>Categorías y subcategorías</div></div>
     <div class="fg3" style="margin-bottom:8px">
       <div class="fgrp"><label>Tipo</label><select id="cfg-tp" onchange="renderCC()"><option value="gasto">Gastos</option><option value="ingreso">Ingresos</option></select></div>
-      <div class="fgrp"><label>Persona</label><select id="cfg-per" onchange="renderCC()"><option>Camila</option><option>Mamá</option><option>Hogar</option></select></div>
+      <div class="fgrp"><label>Persona</label><select id="cfg-per" onchange="renderCC()"></select></div>
       <div class="fgrp"><label>Categoría para subcats</label><select id="cfg-cs" onchange="renderSC()"></select></div>
     </div>
     <div id="cfg-cats" style="margin-bottom:8px"></div>
@@ -662,7 +662,12 @@ function initDef(){
   genNotifs();
 }
 
-function fmt(n){return parseFloat(n||0).toFixed(2);}
+function getPersonasNombres(){
+  // Devuelve nombres únicos de db.personas, garantizando que Camila y Mamá siempre estén
+  const base=['Camila','Mamá'];
+  const extras=db.personas.map(p=>p.nombre).filter(n=>!base.includes(n));
+  return [...base,...extras];
+}
 function fS(n){return`S/ ${fmt(n)}`;}
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function getMes(){return new Date().toISOString().substring(0,7);}
@@ -1543,13 +1548,15 @@ function elimT(id){
 }
 
 function renderCC(){
+  // Llenar selector de personas dinámicamente
+  const perSel=document.getElementById('cfg-per');
+  const personasAct=[...getPersonasNombres(),'Hogar'];
+  if(perSel.children.length!==personasAct.length){
+    const valActual=perSel.value;
+    perSel.innerHTML=personasAct.map(p=>`<option>${p}</option>`).join('');
+    if(personasAct.includes(valActual))perSel.value=valActual;
+  }
   const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value;
-  const cats=(db.cats[tp]||{})[per]||[];
-  document.getElementById('cfg-cats').innerHTML=cats.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--m3);border:1.5px solid var(--m2);margin:3px;color:var(--m1)">${c} <span style="color:var(--red);cursor:pointer;margin-left:2px" onclick="delCat('${tp}','${per}','${c.replace(/'/g,"\\'")}')" >×</span></span>`).join('');
-  const cs=document.getElementById('cfg-cs');cs.innerHTML='';cats.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;cs.appendChild(o);});
-  renderSC();
-  document.getElementById('cfg-ctas').innerHTML=db.cuentas.map(c=>`<div class="row"><div><strong>${c.nombre}</strong> <span class="chip">${c.tipo}</span></div><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700;color:var(--m1)">${fS(c.saldo)}</span><button class="btn bgh bxs" onclick="editCta(${c.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button><button class="btn bgh bxs" onclick="elimCta(${c.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button></div></div>`).join('');
-}
 function renderSC(){const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value,cat=document.getElementById('cfg-cs')?.value;const subs=cat?((db.subcats[tp]||{})[per]||{})[cat]||[]:[];document.getElementById('cfg-subs').innerHTML=subs.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--r3);border:1.5px solid var(--r1);margin:3px;color:#c45a80">${s} <span style="color:var(--red);cursor:pointer;margin-left:2px" onclick="delSub('${tp}','${per}','${cat.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}')" >×</span></span>`).join('');}
 function addCat(){const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value,v=document.getElementById('cfg-nc').value.trim();if(!v)return;if(!db.cats[tp][per])db.cats[tp][per]=[];if(db.cats[tp][per].includes(v)){toast('Ya existe');return;}db.cats[tp][per].push(v);save();document.getElementById('cfg-nc').value='';renderCC();updateCats();toast('✓ Añadida');}
 function delCat(tp,per,c){db.cats[tp][per]=db.cats[tp][per].filter(x=>x!==c);save();renderCC();updateCats();}
