@@ -206,41 +206,52 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 </div>
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
-  <div class="sb-logo"><h1>💚 Finanzas 360</h1><p id="sb-fecha"></p>
+  <div class="sb-logo">
+    <h1>💚 Finanzas 360</h1>
+    <p id="sb-fecha"></p>
     <div class="sync-ind"><div id="sync-dot"></div><span id="sync-txt">Conectando...</span></div>
     <div style="font-size:11px;color:var(--text3);margin-top:3px" id="user-lbl"></div>
   </div>
   <nav class="sb-nav">
-    <div class="sb-sec">Principal</div>
+
+    <div class="sb-sec">🏠 Principal</div>
     <button class="ni active" onclick="go('dashboard')" id="ni-dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
     <button class="ni" onclick="go('actividad')" id="ni-actividad"><i class="ti ti-bell"></i>Actividad<span class="bc" id="nc" style="display:none">0</span></button>
     <button class="ni" onclick="go('asistente')" id="ni-asistente"><i class="ti ti-sparkles"></i>Asistente ✨</button>
-    <div class="sb-sec">Finanzas</div>
+
+    <div class="sb-sec">💰 Finanzas</div>
     <button class="ni" onclick="go('registrar')" id="ni-registrar"><i class="ti ti-circle-plus"></i>Registrar</button>
     <button class="ni" onclick="go('historial')" id="ni-historial"><i class="ti ti-list"></i>Historial</button>
     <button class="ni" onclick="go('cuentas')" id="ni-cuentas"><i class="ti ti-wallet"></i>Cuentas</button>
     <button class="ni" onclick="go('metas')" id="ni-metas"><i class="ti ti-target"></i>Metas</button>
     <button class="ni" onclick="go('deudas')" id="ni-deudas"><i class="ti ti-credit-card"></i>Deudas</button>
     <button class="ni" onclick="go('prestamos')" id="ni-prestamos"><i class="ti ti-handshake"></i>Me Deben</button>
-    <button class="ni" onclick="go('emergencia')" id="ni-emergencia"><i class="ti ti-shield"></i>Fondo Emergencia</button>
     <button class="ni" onclick="go('proyeccion')" id="ni-proyeccion"><i class="ti ti-trending-up"></i>Proyección</button>
-    <div class="sb-sec">Consultorio</div>
-    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Te Abrazo</button>
-    <div class="sb-sec">Hogar y Servicios</div>
-    <button class="ni" onclick="go('hogar')" id="ni-hogar"><i class="ti ti-home"></i>Hogar Compartido</button>
+
+    <div class="sb-sec">🧩 Trabajo</div>
+    <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Tea Abrazo</button>
+    <button class="ni" onclick="go('pacientes')" id="ni-pacientes"><i class="ti ti-user-heart"></i>Pacientes propios</button>
+    <button class="ni" onclick="go('reportes-trabajo')" id="ni-reportes-trabajo"><i class="ti ti-chart-bar"></i>Reportes laborales</button>
+
+    <div class="sb-sec">🏡 Hogar y Servicios</div>
+    <button class="ni" onclick="go('hogar')" id="ni-hogar"><i class="ti ti-home"></i>Hogar compartido</button>
     <button class="ni" onclick="go('servicios')" id="ni-servicios"><i class="ti ti-device-tv"></i>Servicios</button>
-    <button class="ni" onclick="go('fijos')" id="ni-fijos"><i class="ti ti-repeat"></i>Gastos Fijos</button>
-    <div class="sb-sec">Más</div>
+    <button class="ni" onclick="go('fijos')" id="ni-fijos"><i class="ti ti-repeat"></i>Gastos fijos</button>
+
+    <div class="sb-sec">📂 Más</div>
     <button class="ni" onclick="go('personas')" id="ni-personas"><i class="ti ti-users"></i>Personas</button>
     <button class="ni" onclick="go('patrimonio')" id="ni-patrimonio"><i class="ti ti-building"></i>Patrimonio</button>
     <button class="ni" onclick="go('calendario')" id="ni-calendario"><i class="ti ti-calendar"></i>Calendario</button>
     <button class="ni" onclick="go('reportes')" id="ni-reportes"><i class="ti ti-chart-bar"></i>Reportes</button>
     <button class="ni" onclick="go('agenda')" id="ni-agenda"><i class="ti ti-checklist"></i>Agenda</button>
+
+    <div class="sb-sec">⚙️ Sistema</div>
     <button class="ni" onclick="go('config')" id="ni-config"><i class="ti ti-settings"></i>Configuración</button>
     <button class="ni" onclick="toggleDark()"><i class="ti ti-moon"></i>Modo oscuro</button>
     <button class="ni" onclick="fbSignOut()" style="color:#E53E3E"><i class="ti ti-logout"></i>Cerrar sesión</button>
+
   </nav>
-  <div class="sb-foot">Finanzas 360 v2.0 💚</div>
+  <div class="sb-foot">Finanzas 360 v3.0 💚</div>
 </aside>
 <div class="mob-ov" id="mob-ov" onclick="closeSB()"></div>
 <main class="main">
@@ -466,6 +477,29 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
   <!-- Lista de cobros -->
   <div id="ta-lista-cobros"></div>
+</div>
+
+<!-- PACIENTES PROPIOS -->
+<div class="screen" id="screen-pacientes">
+  <div class="hcard hc-m" style="margin-bottom:12px">
+    <div style="font-size:11px;opacity:0.85;margin-bottom:2px">PACIENTES PROPIOS — ESTE MES</div>
+    <div id="pp-tot" style="font-size:28px;font-weight:800">S/ 0.00</div>
+  </div>
+  <div class="sec-h">
+    <span class="sec-ht"><i class="ti ti-user-heart"></i> Mis pacientes propios</span>
+    <button class="btn bp bsm" onclick="openRegistrarCobroPropio()"><i class="ti ti-plus"></i> Registrar cobro</button>
+  </div>
+  <div id="pp-lista"></div>
+</div>
+
+<!-- REPORTES LABORALES -->
+<div class="screen" id="screen-reportes-trabajo">
+  <div class="g2" style="margin-bottom:12px" id="rt-stats"></div>
+  <div class="card">
+    <div class="ct"><div class="ctl"><i class="ti ti-chart-bar"></i>Ingresos laborales — últimos 6 meses</div></div>
+    <div style="position:relative;height:200px"><canvas id="cTrabajo"></canvas></div>
+  </div>
+  <div class="card" id="rt-detalle"></div>
 </div>
 
 <!-- HOGAR -->
@@ -695,16 +729,13 @@ function closeSB(){document.getElementById('sidebar').classList.remove('open');d
 function ingCons(mes){return db.pacientes.reduce((s,p)=>{const ses=(p.sesiones||[]).filter(se=>se.fecha&&se.fecha.startsWith(mes)&&se.estado==='realizada');const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+ses.length*g;},0);}
 function ingConsPend(){return db.pacientes.reduce((s,p)=>{const n=(p.sesiones||[]).filter(se=>se.estado==='pendiente').length;const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+n*g;},0);}
 
-const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Consultorio',hogar:'Hogar Compartido',servicios:'Servicios',fijos:'Gastos Fijos',personas:'Personas',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};
-function go(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Tea Abrazo',pacientes:'Pacientes Propios','reportes-trabajo':'Reportes Laborales',hogar:'Hogar Compartido',servicios:'Servicios',fijos:'Gastos Fijos',personas:'Personas',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
   const ni=document.getElementById('ni-'+id);if(ni)ni.classList.add('active');
   const t=TITLES[id]||id;document.getElementById('topbar-t').textContent=t;document.getElementById('mob-title').textContent=t;
   closeSB();
-  const R={dashboard:renderDash,actividad:renderActividad,asistente:renderAI,historial:renderHist,cuentas:renderCuentas,metas:renderMetas,deudas:renderDeudas,prestamos:renderPrest,emergencia:renderFE,proyeccion:renderProyeccion,consultorio:renderConsultorio,hogar:renderHogar,servicios:renderServs,fijos:renderFijos,personas:renderPers,patrimonio:renderPat,calendario:renderCal,reportes:()=>setRT('a'),agenda:renderAgenda,config:renderCC};
-  if(R[id])R[id]();
+const R={dashboard:renderDash,actividad:renderActividad,asistente:renderAI,historial:renderHist,cuentas:renderCuentas,metas:renderMetas,deudas:renderDeudas,prestamos:renderPrest,emergencia:renderFE,proyeccion:renderProyeccion,consultorio:renderConsultorio,pacientes:renderPacientesProPios,'reportes-trabajo':renderReportesTrabajo,hogar:renderHogar,servicios:renderServs,fijos:renderFijos,personas:renderPers,patrimonio:renderPat,calendario:renderCal,reportes:()=>setRT('a'),agenda:renderAgenda,config:renderCC};  if(R[id])R[id]();
   if(id==='registrar'){updateCats();renderHormiga();renderCtasSelect();}
 }
 
@@ -1173,6 +1204,164 @@ function renderConsultorio(){
         </div>`).join('')}
     </div>`;
   }).join('');
+}
+// ── PACIENTES PROPIOS ──────────────────────────────────────────────────────
+function renderPacientesProPios(){
+  if(!db.cobrosProPios)db.cobrosProPios=[];
+  const mes=getMes();
+  const cobMes=db.cobrosProPios.filter(c=>c.fecha&&c.fecha.startsWith(mes));
+  const tot=cobMes.reduce((s,c)=>s+c.monto,0);
+  document.getElementById('pp-tot').textContent=fS(tot);
+  const el=document.getElementById('pp-lista');
+  if(!db.cobrosProPios.length){
+    el.innerHTML='<div class="empty"><i class="ti ti-user-heart"></i>Sin cobros registrados aún</div>';return;
+  }
+  const porMes={};
+  db.cobrosProPios.sort((a,b)=>b.fecha.localeCompare(a.fecha)).forEach(c=>{
+    const m=c.fecha.substring(0,7);
+    if(!porMes[m])porMes[m]=[];
+    porMes[m].push(c);
+  });
+  el.innerHTML=Object.entries(porMes).map(([m,cobros])=>{
+    const tot=cobros.reduce((s,c)=>s+c.monto,0);
+    const lbl=new Date(m+'-01').toLocaleDateString('es-PE',{month:'long',year:'numeric'});
+    return`<div class="card">
+      <div class="ct"><div class="ctl"><i class="ti ti-calendar"></i>${lbl}</div><span class="badge bg">Total: ${fS(tot)}</span></div>
+      ${cobros.map(c=>`
+        <div style="background:var(--m3);border-radius:var(--rs);padding:12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:var(--green)">${fS(c.monto)}</div>
+              <div style="font-size:11px;color:var(--text3)">${c.fecha}${c.adelanto?' · <span style="color:var(--amber);font-weight:700">⚡ Adelanto</span>':''}</div>
+            </div>
+            <div style="display:flex;gap:5px">
+              <button class="btn bgh bxs" onclick="openRegistrarCobroPropio(${c.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button>
+              <button class="btn bgh bxs" onclick="elimCobroPropio(${c.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+            </div>
+          </div>
+          ${c.pacientes&&c.pacientes.length?`
+            <div style="margin-bottom:6px">
+              ${c.pacientes.map(p=>`
+                <div style="background:#fff;border-radius:8px;padding:8px;margin-bottom:4px">
+                  <div style="font-weight:600;font-size:12px">${p.nombre}</div>
+                  ${p.nota?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${p.nota}</div>`:''}
+                </div>`).join('')}
+            </div>`:''}
+          ${c.nota?`<div style="font-size:12px;color:var(--text2);border-top:1px solid var(--border);padding-top:6px;margin-top:4px">📝 ${c.nota}</div>`:''}
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+function openRegistrarCobroPropio(id){
+  const cobro=id?db.cobrosProPios.find(c=>c.id===id):null;
+  openMod(`<div class="mt2"><span>${cobro?'✏️ Editar cobro':'💰 Cobro propio'}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div class="fg2">
+    <div class="fgrp"><label>Fecha</label><input type="date" id="cp-fecha" value="${cobro?cobro.fecha:new Date().toISOString().split('T')[0]}"></div>
+    <div class="fgrp"><label>Monto (S/)</label><input type="number" id="cp-monto" placeholder="0.00" step="0.01" value="${cobro?cobro.monto:''}"></div>
+  </div>
+  <div class="fgrp" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--m3);border-radius:var(--rs)">
+    <input type="checkbox" id="cp-adelanto" style="width:18px;height:18px" ${cobro&&cobro.adelanto?'checked':''}>
+    <label style="margin:0;font-size:13px;font-weight:600;cursor:pointer" for="cp-adelanto">¿Es adelanto de la próxima quincena?</label>
+  </div>
+  <div style="margin:12px 0 6px;font-size:12px;font-weight:700;color:var(--m1);text-transform:uppercase">Pacientes</div>
+  <div id="cp-pacs-list"></div>
+  <button class="btn bgh bsm" onclick="addPacCobroPropio()" style="color:var(--m1);margin-bottom:10px"><i class="ti ti-plus"></i> Agregar paciente</button>
+  <div class="fgrp"><label>Nota</label><textarea id="cp-nota" rows="2" placeholder="Observaciones...">${cobro?cobro.nota||'':''}</textarea></div>
+  <button class="btn bp bfw" onclick="guardarCobroPropio(${id||'null'})"><i class="ti ti-check"></i> ${cobro?'Guardar cambios':'Registrar'}</button>`);
+  window._cpPacs=cobro&&cobro.pacientes?[...cobro.pacientes]:[{nombre:'',nota:''}];
+  renderPacsCobroPropio();
+}
+function renderPacsCobroPropio(){
+  document.getElementById('cp-pacs-list').innerHTML=window._cpPacs.map((p,i)=>`
+    <div style="background:var(--b1);border-radius:var(--rs);padding:10px;margin-bottom:8px">
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input type="text" placeholder="Nombre del paciente" value="${p.nombre||''}" oninput="window._cpPacs[${i}].nombre=this.value" style="flex:1;margin:0">
+        <button class="btn bgh bxs" onclick="removePacCobroPropio(${i})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>
+      <textarea placeholder="Nota: sesión individual, S/80..." rows="2" oninput="window._cpPacs[${i}].nota=this.value" style="margin:0">${p.nota||''}</textarea>
+    </div>`).join('');
+}
+function addPacCobroPropio(){
+  window._cpPacs.push({nombre:'',nota:''});
+  renderPacsCobroPropio();
+}
+function removePacCobroPropio(i){
+  window._cpPacs.splice(i,1);
+  renderPacsCobroPropio();
+}
+function guardarCobroPropio(id){
+  const fecha=document.getElementById('cp-fecha').value;
+  const monto=parseFloat(document.getElementById('cp-monto').value)||0;
+  if(!fecha||!monto){toast('Completa fecha y monto');return;}
+  if(!db.cobrosProPios)db.cobrosProPios=[];
+  const cobro={
+    id:id||Date.now(),fecha,monto,
+    adelanto:document.getElementById('cp-adelanto').checked,
+    pacientes:window._cpPacs.filter(p=>p.nombre.trim()),
+    nota:document.getElementById('cp-nota').value.trim()
+  };
+  if(id){const idx=db.cobrosProPios.findIndex(c=>c.id===id);if(idx>=0)db.cobrosProPios[idx]=cobro;}
+  else{
+    db.cobrosProPios.push(cobro);
+    db.movimientos.push({
+      id:Date.now()+1,fecha,tipo:'ingreso',persona:'Camila',
+      categoria:'Ingresos del mes',subcategoria:'Pacientes propios',
+      monto,metodo:'Efectivo',pr:'Pacientes propios',nt:cobro.nota||''
+    });
+  }
+  save();closeMN();renderPacientesProPios();toast(id?'✓ Actualizado':'✓ Registrado');
+}
+function elimCobroPropio(id){
+  if(!confirm('¿Eliminar este cobro?'))return;
+  db.cobrosProPios=db.cobrosProPios.filter(c=>c.id!==id);
+  save();renderPacientesProPios();toast('Eliminado');
+}
+
+// ── REPORTES LABORALES ─────────────────────────────────────────────────────
+function renderReportesTrabajo(){
+  if(!db.cobros)db.cobros=[];
+  if(!db.cobrosProPios)db.cobrosProPios=[];
+  const mes=getMes();
+  const ms=getLast6();
+
+  // Totales por fuente este mes
+  const totTA=db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+c.monto,0);
+  const totPP=db.cobrosProPios.filter(c=>c.fecha&&c.fecha.startsWith(mes)).reduce((s,c)=>s+c.monto,0);
+  const totMes=totTA+totPP;
+
+  document.getElementById('rt-stats').innerHTML=`
+    <div class="hcard hc-m" style="margin:0">
+      <div style="font-size:11px;opacity:0.85;margin-bottom:2px">TOTAL LABORAL ESTE MES</div>
+      <div style="font-size:26px;font-weight:800">${fS(totMes)}</div>
+    </div>
+    <div class="metric" style="align-self:center">
+      <div style="margin-bottom:8px"><div class="ml">${getNombreFuente()}</div><div class="mv cb">${fS(totTA)}</div></div>
+      <div><div class="ml">Pacientes propios</div><div class="mv cg">${fS(totPP)}</div></div>
+    </div>`;
+
+  // Gráfica últimos 6 meses
+  const taArr=ms.map(m=>db.cobros.filter(c=>c.fecha&&c.fecha.startsWith(m)).reduce((s,c)=>s+c.monto,0));
+  const ppArr=ms.map(m=>db.cobrosProPios.filter(c=>c.fecha&&c.fecha.startsWith(m)).reduce((s,c)=>s+c.monto,0));
+  const lb=ms.map(m=>new Date(m+'-01').toLocaleDateString('es-PE',{month:'short'}));
+  const c=document.getElementById('cTrabajo');
+  if(c._ch)c._ch.destroy();
+  c._ch=new Chart(c,{type:'bar',data:{labels:lb,datasets:[
+    {label:getNombreFuente(),data:taArr,backgroundColor:'#A8D8C8',borderRadius:6},
+    {label:'Pacientes propios',data:ppArr,backgroundColor:'#C7B8EA',borderRadius:6}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10,family:'Poppins'},boxWidth:10}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});
+
+  // Detalle por mes
+  document.getElementById('rt-detalle').innerHTML=`
+    <div class="ct"><div class="ctl"><i class="ti ti-table"></i>Detalle mensual</div></div>
+    <div class="tw"><table>
+      <thead><tr><th>Mes</th><th>${getNombreFuente()}</th><th>Pac. propios</th><th>Total</th></tr></thead>
+      <tbody>${ms.map((m,i)=>`<tr>
+        <td>${lb[i]}</td>
+        <td class="pos">${fS(taArr[i])}</td>
+        <td class="pos">${fS(ppArr[i])}</td>
+        <td style="font-weight:700">${fS(taArr[i]+ppArr[i])}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
 }
 function renderHogar(){const mes=getMes();const gastos=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&m.persona==='Hogar'&&m.tipo==='gasto');const tot=gastos.reduce((s,m)=>s+m.monto,0);document.getElementById('hogar-tot').textContent=fS(tot);document.getElementById('hogar-ap').innerHTML=`<div class="metric"><div class="ml">💚 Camila aportó</div><div class="mv cg">${fS(tot/2)}</div><div class="ms">50% estimado</div></div><div class="metric"><div class="ml">🌸 Mamá aportó</div><div class="mv cp">${fS(tot/2)}</div><div class="ms">50% estimado</div></div>`;document.getElementById('hogar-list').innerHTML=gastos.length?gastos.map(g=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700">${g.categoria}</div><div style="font-size:11px;color:var(--text3)">${g.fecha}${g.pr?' · '+g.pr:''}${g.nt?' · '+g.nt:''}</div></div><div class="neg">${fS(g.monto)}</div></div></div>`).join(''):'<div class="empty"><i class="ti ti-home"></i>Sin gastos del hogar este mes</div>';}
 
