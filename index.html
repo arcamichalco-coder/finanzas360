@@ -725,7 +725,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 const DC={gasto:{Camila:['Pasajes','Plataformas digitales','Cuidado personal','Formación profesional','Colegiatura','Salud','Compras personales','Snacks y antojos','Delivery','Cafés','Compras impulsivas','Ropa','Entretenimiento','Tecnología'],'Mamá':['Alquiler','Banco','Transporte','Salud','Mercado','Gastos personales','Compras pequeñas','Extras de mercado'],Hogar:['Agua','Luz','Gas','Internet','Mercado hogar','Limpieza','Mejoras','Reparaciones','Alquiler hogar']},ingreso:{Camila:['Ingresos del mes','Otros ingresos'],'Mamá':['Sueldo','Ingresos adicionales','Otros apoyos'],Hogar:['Aportes familiares','Otros']}};
 const DSC={gasto:{Camila:{'Salud':['Consulta médica','Medicamentos','Laboratorio','Emergencia','Óptica'],'Cuidado personal':['Peluquería','Cosméticos','Estética','Depilación'],'Formación profesional':['Cursos','Libros','Materiales','Congresos'],'Snacks y antojos':['Bodega','Delivery','Cafetería','Kiosco'],'Tecnología':['Equipos','Accesorios','Suscripciones'],'Pasajes':['Bus','Taxi','Uber','Combi']},'Mamá':{'Mercado':['Verduras','Carnes','Limpieza','Abarrotes'],'Salud':['Consulta','Medicamentos','Exámenes']},Hogar:{'Mercado hogar':['Verduras','Carnes','Limpieza','Abarrotes'],'Mejoras':['Muebles','Electrodomésticos','Decoración']}},ingreso:{Camila:{},'Mamá':{},Hogar:{}}};
 const HC=['Snacks y antojos','Delivery','Cafés','Compras impulsivas','Compras pequeñas','Extras de mercado'];
-let MT='gasto',PR='',CF=new Date(),AT='pend',DT='todo';
+let MT='gasto',PR='',CF=new Date(),AT='pend',DT='todo',PBopen=false;
 let db={movimientos:[],deudas:[],prestamos:[],metas:[],patrimonio_a:[],patrimonio_p:[],serv_o:[],serv_s:[],eventos:[],pacientes:[],personas:[],tareas:[],notifs:[],fe:[],metaAnual:{v:0,y:new Date().getFullYear()},cuentas:[],cats:JSON.parse(JSON.stringify(DC)),subcats:JSON.parse(JSON.stringify(DSC)),presupuestoBase:[]};
 
 window._lastSaveTs=0;
@@ -2226,7 +2226,12 @@ function renderCompCard(){
 
 // ── PROYECCIÓN (NEW) ──────────────────────────────────────────────────────
 function renderProyeccion(){
-  renderPB();
+  if(PBopen)renderPB();
+  else{
+    const badge=document.getElementById('pb-badge');
+    const pres=calcPresupuesto();
+    badge.textContent=pres?`Comprometido ${fS(pres.comprometido)}/mes`:'Sin configurar';
+  }
   const ms=getLast6();
   const avgI=ms.map(m=>calcMes(m).ing).filter(v=>v>0);
   const avgG=ms.map(m=>calcMes(m).gas).filter(v=>v>0);
@@ -2268,10 +2273,10 @@ function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileRe
 function togglePB(){
   const panel=document.getElementById('pb-panel');
   const chev=document.getElementById('pb-chevron');
-  const abierto=panel.style.display==='block';
-  panel.style.display=abierto?'none':'block';
-  chev.style.transform=abierto?'rotate(0deg)':'rotate(180deg)';
-  if(!abierto)renderPB();
+  PBopen=!PBopen;
+  panel.style.display=PBopen?'block':'none';
+  chev.style.transform=PBopen?'rotate(180deg)':'rotate(0deg)';
+  if(PBopen)renderPB();
 }
 
 function renderPB(){
@@ -2357,8 +2362,10 @@ function openNPB(id){
   </div>
   <div class="fgrp"><label>Persona</label><select id="npb-per"></select></div>
   <button class="btn bp bfw" onclick="guardarPB(${id||'null'})"><i class="ti ti-check"></i> ${p?'Guardar cambios':'Agregar compromiso'}</button>`);
-  setTimeout(()=>fillPersonaSelects(['npb-per']),0);
-  if(p)setTimeout(()=>{const s=document.getElementById('npb-per');if(s)s.value=p.persona;},10);
+  setTimeout(()=>{
+    fillPersonaSelects(['npb-per']);
+    if(p){const s=document.getElementById('npb-per');if(s)s.value=p.persona;}
+  },0);
 }
 
 function editPB(id){openNPB(id);}
