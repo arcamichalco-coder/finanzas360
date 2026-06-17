@@ -827,11 +827,8 @@ function calcMes(mes){
   return{ing,gas,ahorro:ing-gas,deu,pre,pat,fijos,saldo,comprometido,disponible};
 }
 function calcPresupuesto(){
-
   if(!db.presupuestoBase||!db.presupuestoBase.length)return null;
-
   const activos=db.presupuestoBase.filter(p=>p.activo);
-
   if(!activos.length)return null;
 
   // Ingreso esperado: promedio de los últimos 3 meses con ingresos > 0
