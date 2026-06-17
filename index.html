@@ -489,9 +489,31 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
   </div>
 </div>
 
-<!-- PROYECCIÓN (NEW) -->
+<!-- PROYECCIÓN -->
 <div class="screen" id="screen-proyeccion">
+
+  <!-- PRESUPUESTO BASE: sección colapsable superior -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ct" style="cursor:pointer" onclick="togglePB()">
+      <div class="ctl"><i class="ti ti-layout-list"></i>Presupuesto Base</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="pb-badge" style="font-size:11px;color:var(--text3)"></span>
+        <i class="ti ti-chevron-down" id="pb-chevron" style="transition:transform .2s"></i>
+      </div>
+    </div>
+    <div id="pb-panel" style="display:none">
+      <div id="pb-resumen" style="margin-bottom:14px"></div>
+      <div class="sec-h">
+        <span class="sec-ht"><i class="ti ti-list"></i> Compromisos configurados</span>
+        <button class="btn bp bsm" onclick="openNPB()"><i class="ti ti-plus"></i> Agregar</button>
+      </div>
+      <div id="pb-lista"></div>
+    </div>
+  </div>
+
+  <!-- PROYECCIÓN: resultados -->
   <div id="proy-content"></div>
+
 </div>
 
 <!-- CONSULTORIO -->
@@ -903,6 +925,7 @@ function renderDash(){
     document.getElementById('dash-proy').innerHTML=txt;
     renderSalud();
     renderCharts();
+    renderCopiloto();
   } else {
     renderDashPersona(DT,mes);
   }
@@ -1068,6 +1091,29 @@ function renderSalud(){
       <span style="font-size:13px;font-weight:700;color:${color}">${label}</span>
     </div>
     ${tips.slice(0,3).map(t=>`<div class="al ${t.c}" style="margin-bottom:5px"><span>${t.t}</span></div>`).join('')}`;
+}
+function renderCopiloto(){
+  const pres=calcPresupuesto();
+  const el=document.getElementById('dash-salud');
+  if(!pres)return;
+  const mc=pres.margen>=0?'var(--green)':'var(--red)';
+  const mm=pres.margen>=0?'al-g':'al-e';
+  const extra=document.createElement('div');
+  extra.className='card';
+  extra.style.marginBottom='12px';
+  extra.innerHTML=`
+    <div class="ct"><div class="ctl"><i class="ti ti-plane"></i>Copiloto financiero</div>
+    <button class="btn bgh bxs" onclick="go('proyeccion')" style="color:var(--m1)">Ver detalle →</button></div>
+    <div class="g3" style="margin-bottom:10px">
+      <div class="metric"><div class="ml">Ingreso esperado</div><div class="mv cg">${fS(pres.ingEsperado)}</div></div>
+      <div class="metric"><div class="ml">Comprometido</div><div class="mv cr">${fS(pres.comprometido)}</div></div>
+      <div class="metric"><div class="ml">Disponible</div><div class="mv cp">${fS(pres.disponible)}</div></div>
+      <div class="metric"><div class="ml">Libre este mes</div><div class="mv ${pres.libre>=0?'cg':'cr'}">${fS(pres.libre)}</div></div>
+      <div class="metric"><div class="ml">Margen seguridad</div><div class="mv" style="color:${mc}">${fS(pres.margen)}</div></div>
+    </div>
+    <div class="al ${mm}"><i class="ti ti-shield"></i>
+    <span>${pres.margen>=0?`Margen real: <strong>${fS(pres.margen)}</strong>. Puedes tomar decisiones con seguridad.`:`Margen negativo. Revisa tus compromisos antes de gastar.`}</span></div>`;
+  el.parentNode.insertBefore(extra, el.nextSibling);
 }
 function renderAlerts(){
   const mes=getMes();const{ing,gas,deu,saldo,comprometido}=calcMes(mes);
@@ -1880,8 +1926,11 @@ function responder(){
   const q=inp.toLowerCase();
   let resp='';
 
-  if(q.includes('disponible')||q.includes('puedo gastar')||q.includes('tengo libre'))
-    resp=`💰 Tienes <strong>${fS(disponible)}</strong> disponibles realmente. Saldo total: ${fS(saldo)}, comprometido: ${fS(comprometido)}.`;
+  if(q.includes('disponible')||q.includes('puedo gastar')||q.includes('tengo libre')){
+    const pres=calcPresupuesto();
+    if(pres)resp=`💰 Según tu presupuesto base, tienes <strong>${fS(pres.libre)}</strong> libres este mes y un margen de seguridad de <strong>${fS(pres.margen)}</strong>. Saldo real en cuentas: ${fS(saldo)}.`;
+    else resp=`💰 Tienes <strong>${fS(disponible)}</strong> disponibles. Saldo total: ${fS(saldo)}, comprometido: ${fS(comprometido)}.`;
+  }
   else if(q.includes('saldo')||q.includes('cuánto tengo')||q.includes('cuanto tengo'))
     resp=`🏦 Saldo total: <strong>${fS(saldo)}</strong>. ${db.cuentas.map(c=>`${c.nombre}: ${fS(c.saldo)}`).join(' · ')}`;
   else if(q.includes('deben')||q.includes('cobrar')||q.includes('me deben'))
@@ -2176,11 +2225,14 @@ function renderCompCard(){
 
 // ── PROYECCIÓN (NEW) ──────────────────────────────────────────────────────
 function renderProyeccion(){
+  renderPB();
   const ms=getLast6();
   const avgI=ms.map(m=>calcMes(m).ing).filter(v=>v>0);
   const avgG=ms.map(m=>calcMes(m).gas).filter(v=>v>0);
   const pI=avgI.length?avgI.reduce((s,v)=>s+v,0)/avgI.length:0;
-  const pG=avgG.length?avgG.reduce((s,v)=>s+v,0)/avgG.length:0;
+  const pGHist=avgG.length?avgG.reduce((s,v)=>s+v,0)/avgG.length:0;
+  const pres=calcPresupuesto();
+  const pG=pres?pres.comprometido:pGHist;
   const pA=pI-pG;
   if(pI===0){document.getElementById('proy-content').innerHTML='<div class="card"><p style="color:var(--text3);text-align:center;padding:20px">Registra ingresos para ver la proyección.</p></div>';return;}
   const proj=Array.from({length:6},(_,i)=>{const d=new Date(new Date().getFullYear(),new Date().getMonth()+i+1,1);return{lbl:d.toLocaleDateString('es-PE',{month:'short',year:'2-digit'}),acum:Math.round(pA*(i+1))};});
@@ -2211,6 +2263,136 @@ function renderRMetodos(){
 // ── EXPORT (NEW - import/export) ──────────────────────────────────────────
 function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);db={...db,...d};save();postInit();toast('✓ Datos importados');}catch(x){toast('Error al importar');}};r.readAsText(f);}
 
+// ── PRESUPUESTO BASE ──────────────────────────────────────────────────────
+function togglePB(){
+  const panel=document.getElementById('pb-panel');
+  const chev=document.getElementById('pb-chevron');
+  const abierto=panel.style.display==='block';
+  panel.style.display=abierto?'none':'block';
+  chev.style.transform=abierto?'rotate(0deg)':'rotate(180deg)';
+  if(!abierto)renderPB();
+}
+
+function renderPB(){
+  const pres=calcPresupuesto();
+  const badge=document.getElementById('pb-badge');
+
+  // Badge con resumen compacto
+  if(!db.presupuestoBase||!db.presupuestoBase.length){
+    badge.textContent='Sin configurar';
+    document.getElementById('pb-resumen').innerHTML=`
+      <div class="al al-m"><i class="ti ti-info-circle"></i>
+      <span>Configura tus compromisos financieros recurrentes aquí y la app calculará automáticamente cuánto tienes disponible antes de gastar.</span></div>`;
+  } else if(pres){
+    badge.textContent=`Comprometido ${fS(pres.comprometido)}/mes`;
+    const mc=pres.margen>=0?'cg':'cr';
+    const mm=pres.margen>=0?'al-g':'al-e';
+    document.getElementById('pb-resumen').innerHTML=`
+      <div class="g3" style="margin-bottom:12px">
+        <div class="metric"><div class="ml">Ingreso esperado</div><div class="mv cg">${fS(pres.ingEsperado)}</div><div class="ms">promedio 3 meses</div></div>
+        <div class="metric"><div class="ml">Comprometido</div><div class="mv cr">${fS(pres.comprometido)}</div><div class="ms">gastos recurrentes</div></div>
+        <div class="metric"><div class="ml">Disponible</div><div class="mv cp">${fS(pres.disponible)}</div><div class="ms">para decidir</div></div>
+        <div class="metric"><div class="ml">Libre este mes</div><div class="mv ${pres.libre>=0?'cg':'cr'}">${fS(pres.libre)}</div><div class="ms">disponible - gastado</div></div>
+        <div class="metric"><div class="ml">Margen de seguridad</div><div class="mv ${mc}">${fS(pres.margen)}</div><div class="ms">sin fondo emergencia</div></div>
+      </div>
+      <div class="al ${mm}"><i class="ti ti-shield"></i>
+      <span>${pres.margen>=0?`Tienes <strong>${fS(pres.margen)}</strong> de margen real este mes.`:`Tu margen de seguridad es negativo. Revisa tus compromisos o aumenta tu fondo de emergencia.`}</span></div>`;
+  }
+
+  // Lista de ítems
+  const el=document.getElementById('pb-lista');
+  if(!db.presupuestoBase||!db.presupuestoBase.length){
+    el.innerHTML='<div class="empty" style="padding:16px 0"><i class="ti ti-layout-list"></i>Sin compromisos aún</div>';
+    return;
+  }
+  const prioridades={no_negociable:{l:'No negociable',c:'br'},importante:{l:'Importante',c:'ba'},meta:{l:'Meta',c:'bm'},opcional:{l:'Opcional',c:'bv'}};
+  el.innerHTML=db.presupuestoBase.map(p=>{
+    const pr=prioridades[p.prioridad]||{l:p.prioridad,c:'bm'};
+    const reserva=reservaMes(p);
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:.5px solid var(--border)">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-weight:600;font-size:13px">${p.nombre}</span>
+          <span class="badge ${pr.c}" style="font-size:10px">${pr.l}</span>
+          ${!p.activo?'<span class="badge" style="background:var(--b2);color:var(--text3);font-size:10px">Pausado</span>':''}
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">
+          ${p.categoria} · ${freqLabel(p.frecuencia)} · ${p.persona||'Sin asignar'}
+          ${p.frecuencia!=='mensual'?` · <span style="color:var(--amber)">Reservar ${fS(reserva)}/mes</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="font-weight:700;color:var(--red)">${fS(p.monto)}</span>
+        <button class="btn bgh bxs" onclick="togglePBActivo(${p.id})" style="color:${p.activo?'var(--amber)':'var(--green)'}">
+          <i class="ti ti-${p.activo?'pause':'play'}"></i>
+        </button>
+        <button class="btn bgh bxs" onclick="editPB(${p.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button>
+        <button class="btn bgh bxs" onclick="elimPB(${p.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNPB(id){
+  const p=id?db.presupuestoBase.find(x=>x.id===id):null;
+  const prioOpts=['no_negociable|No negociable','importante|Importante','meta|Meta','opcional|Opcional'];
+  const freqOpts=['mensual|Mensual','quincenal|Quincenal','cada2|Cada 2 meses','cada3|Cada 3 meses','anual|Anual'];
+  openMod(`<div class="mt2"><span>${p?'✏️ Editar compromiso':'➕ Nuevo compromiso'}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div class="fg2">
+    <div class="fgrp"><label>Nombre</label><input type="text" id="npb-n" placeholder="Internet, Gym, Ahorro..." value="${p?p.nombre:''}"></div>
+    <div class="fgrp"><label>Monto (S/)</label><input type="number" id="npb-m" placeholder="0.00" step="0.01" value="${p?p.monto:''}"></div>
+  </div>
+  <div class="fg2">
+    <div class="fgrp"><label>Día del mes</label><input type="number" id="npb-d" min="1" max="31" placeholder="1-31" value="${p?p.dia:''}"></div>
+    <div class="fgrp"><label>Frecuencia</label>
+      <select id="npb-f">${freqOpts.map(o=>{const[v,l]=o.split('|');return`<option value="${v}"${p&&p.frecuencia===v?' selected':''}>${l}</option>`;}).join('')}</select>
+    </div>
+  </div>
+  <div class="fg2">
+    <div class="fgrp"><label>Categoría</label><input type="text" id="npb-c" placeholder="Servicios, Salud..." value="${p?p.categoria:''}"></div>
+    <div class="fgrp"><label>Prioridad</label>
+      <select id="npb-pr">${prioOpts.map(o=>{const[v,l]=o.split('|');return`<option value="${v}"${p&&p.prioridad===v?' selected':''}>${l}</option>`;}).join('')}</select>
+    </div>
+  </div>
+  <div class="fgrp"><label>Persona</label><select id="npb-per"></select></div>
+  <button class="btn bp bfw" onclick="guardarPB(${id||'null'})"><i class="ti ti-check"></i> ${p?'Guardar cambios':'Agregar compromiso'}</button>`);
+  setTimeout(()=>fillPersonaSelects(['npb-per']),0);
+  if(p)setTimeout(()=>{const s=document.getElementById('npb-per');if(s)s.value=p.persona;},10);
+}
+
+function editPB(id){openNPB(id);}
+
+function guardarPB(id){
+  const n=document.getElementById('npb-n').value.trim();
+  const m=parseFloat(document.getElementById('npb-m').value)||0;
+  if(!n||!m){toast('Completa nombre y monto');return;}
+  const item={
+    id:id||Date.now(),
+    nombre:n,
+    monto:m,
+    dia:parseInt(document.getElementById('npb-d').value)||1,
+    frecuencia:document.getElementById('npb-f').value,
+    categoria:document.getElementById('npb-c').value.trim()||'General',
+    prioridad:document.getElementById('npb-pr').value,
+    persona:document.getElementById('npb-per').value,
+    activo:true
+  };
+  if(id){const idx=db.presupuestoBase.findIndex(x=>x.id===id);if(idx>=0)db.presupuestoBase[idx]={...db.presupuestoBase[idx],...item};}
+  else db.presupuestoBase.push(item);
+  save();closeMN();renderPB();renderProyeccion();toast('✓ Guardado');
+}
+
+function elimPB(id){
+  db.presupuestoBase=db.presupuestoBase.filter(p=>p.id!==id);
+  save();renderPB();renderProyeccion();toast('Eliminado');
+}
+
+function togglePBActivo(id){
+  const p=db.presupuestoBase.find(x=>x.id===id);
+  if(!p)return;
+  p.activo=!p.activo;
+  save();renderPB();renderProyeccion();toast(p.activo?'✓ Activado':'Pausado');
+}
 // INIT — Firebase handles postInit via _cloudLoad or _localInit
 // If Firebase doesn't load within 4 seconds, init locally
 setTimeout(()=>{if(!window._uid){load();postInit();}},4000);
