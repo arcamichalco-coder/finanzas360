@@ -801,6 +801,32 @@ function calcMes(mes){
   const disponible=Math.max(0,saldo-comprometido);
   return{ing,gas,ahorro:ing-gas,deu,pre,pat,fijos,saldo,comprometido,disponible};
 }
+function calcPresupuesto(){
+  if(!db.presupuestoBase||!db.presupuestoBase.length)return null;
+  const activos=db.presupuestoBase.filter(p=>p.activo);
+  if(!activos.length)return null;
+
+  // Ingreso esperado: promedio de los últimos 3 meses con ingresos > 0
+  const ms=getLast6().slice(-3);
+  const ings=ms.map(m=>calcMes(m).ing).filter(v=>v>0);
+  const ingEsperado=ings.length?ings.reduce((s,v)=>s+v,0)/ings.length:0;
+
+  // Comprometido: reserva mensual de cada ítem activo
+  const comprometido=activos.reduce((s,p)=>s+reservaMes(p),0);
+
+  // Disponible
+  const disponible=ingEsperado-comprometido;
+
+  // Libre: disponible menos lo gastado real este mes
+  const{gas}=calcMes(getMes());
+  const libre=disponible-gas;
+
+  // Margen de seguridad: disponible menos la cuota mensual faltante del fondo de emergencia
+  const feReserva=db.fe.reduce((s,f)=>{const falt=Math.max(0,(f.meta||0)-(f.monto||0));return s+falt/12;},0);
+  const margen=disponible-feReserva;
+
+  return{ingEsperado,comprometido,disponible,libre,margen,activos};
+}
 function getSem(i,g,d){if(!i&&!g)return 'a';const r=i>0?g/i:1;if(d>0&&r>1)return 'r';if(r>0.85)return 'a';return 'v';}
 function openMod(html){document.getElementById('mbd').innerHTML=html;document.getElementById('mov').classList.add('open');}
 function closeMod(e){if(e.target===document.getElementById('mov'))document.getElementById('mov').classList.remove('open');}
