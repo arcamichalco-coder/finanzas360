@@ -850,9 +850,15 @@ function calcPresupuesto(){
   const feReserva=db.fe.reduce((s,f)=>{const falt=Math.max(0,(f.meta||0)-(f.monto||0));return s+falt/12;},0);
   const margen=disponible-feReserva;
 
-  const resultado={ingEsperado,comprometido,disponible,libre,margen,activos};
-  _presCache=resultado;_presCacheKey=cacheKey;
-  return resultado;
+  return{
+  ingEsperado,
+  comprometido,
+  disponible,
+  libre,
+  margen,
+  activos
+};
+
 }
 function getSem(i,g,d){if(!i&&!g)return 'a';const r=i>0?g/i:1;if(d>0&&r>1)return 'r';if(r>0.85)return 'a';return 'v';}
 function openMod(html){document.getElementById('mbd').innerHTML=html;document.getElementById('mov').classList.add('open');}
