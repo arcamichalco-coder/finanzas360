@@ -711,7 +711,7 @@ window._cloudLoad=function(d){db={...db,...d};if(!db.cats)db.cats=JSON.parse(JSO
 if(db.cats.ingreso&&db.cats.ingreso.Camila&&db.cats.ingreso.Camila.includes('Pacientes propios'))db.cats.ingreso.Camila=['Ingresos del mes','Otros ingresos'];
 initDef();postInit();};
 window._localInit=function(){load();};
-window._mergeCloud=function(d){['movimientos','deudas','prestamos','metas','patrimonio_a','patrimonio_p','serv_o','serv_s','eventos','pacientes','personas','tareas','notifs','fe','cuentas'].forEach(k=>{if(d[k])db[k]=d[k];});if(d.metaAnual)db.metaAnual=d.metaAnual;save();renderPersonaBtns();fillPersonaSelects(['f-per','mt-p','d-per','p-pre','fe-per','ev-r'],true);renderDashTabs();};
+window._mergeCloud=function(d){['movimientos','deudas','prestamos','metas','patrimonio_a','patrimonio_p','serv_o','serv_s','eventos','pacientes','personas','tareas','notifs','fe','cuentas'].forEach(k=>{if(d[k])db[k]=d[k];});if(d.metaAnual)db.metaAnual=d.metaAnual;save();renderPersonaBtns();fillPersonaSelects(['f-per','mt-p','d-per','p-pre','fe-per','ev-r'],true);renderDashTabs();if(document.getElementById('screen-cuentas').classList.contains('active'))renderCuentas();if(document.getElementById('screen-fijos').classList.contains('active'))renderFijos();};
 function load(){
   try{const s=localStorage.getItem('f360v2');if(s){const p=JSON.parse(s);db={...db,...p};['cuentas','fe','tareas','personas','pacientes','notifs','patrimonio_a','patrimonio_p','serv_o','serv_s','metaAnual'].forEach(k=>{if(!db[k])db[k]=k==='metaAnual'?{v:0,y:new Date().getFullYear()}:[];});if(!db.cats)db.cats=JSON.parse(JSON.stringify(DC));if(!db.subcats)db.subcats=JSON.parse(JSON.stringify(DSC));// fix old income cats
 if(db.cats.ingreso&&db.cats.ingreso.Camila&&db.cats.ingreso.Camila.includes('Pacientes propios'))db.cats.ingreso.Camila=['Ingresos del mes','Otros ingresos'];}}catch(e){}
@@ -1105,7 +1105,7 @@ function renderPersonaBtns(){
 
 function setPR(p){PR=p;document.querySelectorAll('#pb-personas-wrap .pb-btn').forEach(b=>b.classList.toggle('active',b.dataset.persona===p));updateCats();}
 function setMT(t){MT=t;document.getElementById('rtab-g').classList.toggle('active',t==='gasto');document.getElementById('rtab-i').classList.toggle('active',t==='ingreso');document.getElementById('rtab-t').classList.toggle('active',t==='transferencia');document.getElementById('c-normal').style.display=t!=='transferencia'?'block':'none';document.getElementById('c-transfer').style.display=t==='transferencia'?'block':'none';document.getElementById('c-dq').style.display=t==='ingreso'?'block':'none';document.getElementById('c-pr').style.display=t==='gasto'?'block':'none';document.getElementById('c-quin').style.display='none';updateCats();if(t==='ingreso')updateQuinResumen();}
-function updateCats(){const sel=document.getElementById('m-cat');if(!sel)return;sel.innerHTML='';((db.cats[MT]||{})[PR]||[]).forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});updateSubs();}
+function updateCats(){const sel=document.getElementById('m-cat');if(!sel)return;sel.innerHTML='';if(!PR||!db.cats[MT]||!db.cats[MT][PR]){updateSubs();return;}(db.cats[MT][PR]||[]).forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});updateSubs();}
 function updateSubs(){const cat=document.getElementById('m-cat')?.value,sel=document.getElementById('m-sub');if(!sel)return;sel.innerHTML='<option value="">— sin subcategoría —</option>';((db.subcats[MT]||{})[PR]||{})[cat]?.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});}
 function guardarMov(){
   const mn=parseFloat(document.getElementById('m-mn').value);if(!mn||mn<=0){toast('⚠ Monto inválido');return;}
@@ -1308,7 +1308,7 @@ function guardarCobro(id){
   else{
     db.cobros.push(cobro);
     db.movimientos.push({
-      id:Date.now()+1,fecha,tipo:'ingreso',persona:'Camila',
+      id:Date.now()+1,fecha,tipo:'ingreso',persona:PR||db.personas[0]?.nombre||'',
       categoria:'Ingresos del mes',subcategoria:getNombreFuente(),
       monto,metodo:'Transferencia',pr:getNombreFuente(),nt:cobro.nota||''
     });
@@ -1471,7 +1471,7 @@ function guardarCobroPropio(id){
   else{
     db.cobrosProPios.push(cobro);
     db.movimientos.push({
-      id:Date.now()+1,fecha,tipo:'ingreso',persona:'Camila',
+      id:Date.now()+1,fecha,tipo:'ingreso',persona:PR||db.personas[0]?.nombre||'',
       categoria:'Ingresos del mes',subcategoria:'Pacientes propios',
       monto,metodo:'Efectivo',pr:'Pacientes propios',nt:cobro.nota||''
     });
@@ -1622,6 +1622,7 @@ function saveEF(id){
 }
 
 function renderFijos(){
+  fillPersonaSelects(['nf-r'],true);
   const fijos=db.eventos.filter(e=>e.tipo==='fijo');
   const mes=getMes();
   const hoy=new Date().getDate();
@@ -1683,10 +1684,12 @@ function mkPaid(id,mk,undo=false){
   const e=db.eventos.find(x=>x.id===id);if(!e)return;
   e.pm[mk]=!undo;
   if(!undo&&e.monto>0){
-    db.movimientos.push({id:Date.now(),fecha:new Date().toISOString().split('T')[0],tipo:'gasto',persona:e.resp==='Ambas'?'Camila':e.resp,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Fijo registrado desde calendario'});
-    // Si es un "Aporte a Mamá", generar también el ingreso espejo para Mamá
+    const respReal=(e.resp==='Ambas'||e.resp==='Compartido')?db.personas[0]?.nombre||'':e.resp;
+    db.movimientos.push({id:Date.now(),fecha:new Date().toISOString().split('T')[0],tipo:'gasto',persona:respReal,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Fijo registrado desde calendario'});
     if(e.cat==='Aporte a Mamá'||e.aporteMama){
-      db.movimientos.push({id:Date.now()+1,fecha:new Date().toISOString().split('T')[0],tipo:'ingreso',persona:'Mamá',categoria:'Aporte de Camila',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Aporte recibido de Camila (automático)'});
+      const receptora=db.personas[1]?.nombre||db.personas[0]?.nombre||'';
+      const emisora=db.personas[0]?.nombre||'';
+      db.movimientos.push({id:Date.now()+1,fecha:new Date().toISOString().split('T')[0],tipo:'ingreso',persona:receptora,categoria:`Aporte de ${emisora}`,subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:`Aporte recibido de ${emisora} (automático)`});
     }
   }
   save();renderFijos();renderCal();toast(undo?'Desmarcado':'✓ Registrado');
@@ -2086,9 +2089,9 @@ function toggleDark(){document.body.classList.toggle('dark');localStorage.setIte
 // ── QUINCENA SUMMARY (NEW) ─────────────────────────────────────────────────
 function updateQuinResumen(){
   const mes=getMes();
-  const q1=db.movimientos.filter(m=>m.tipo==='ingreso'&&m.persona==='Camila'&&m.fecha&&m.fecha.startsWith(mes)&&m.quin==='1ra').reduce((s,m)=>s+m.monto,0);
-  const q2=db.movimientos.filter(m=>m.tipo==='ingreso'&&m.persona==='Camila'&&m.fecha&&m.fecha.startsWith(mes)&&m.quin==='2da').reduce((s,m)=>s+m.monto,0);
-  const otros=db.movimientos.filter(m=>m.tipo==='ingreso'&&m.persona==='Camila'&&m.fecha&&m.fecha.startsWith(mes)&&!m.quin).reduce((s,m)=>s+m.monto,0);
+  const q1=db.movimientos.filter(m=>m.tipo==='ingreso'&&m.persona===PR&&m.fecha&&m.fecha.startsWith(mes)&&m.quin==='1ra').reduce((s,m)=>s+m.monto,0);
+  const q2=db.movimientos.filter(m=>m.tipo==='ingreso'&&m.persona===PR&&m.fecha&&m.fecha.startsWith(mes)&&m.quin==='2da').reduce((s,m)=>s+m.monto,0);
+  const otros=db.movimientos.filter(m=>m.tipo==='ingreso'&&m.persona===PR&&m.fecha&&m.fecha.startsWith(mes)&&!m.quin).reduce((s,m)=>s+m.monto,0);
   const total=q1+q2+otros;
   const el=document.getElementById('quin-resumen');
   if(total>0&&el){
