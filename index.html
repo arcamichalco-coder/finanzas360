@@ -276,6 +276,9 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
   <!-- Salud financiera -->
   <div class="card" id="dash-salud" style="margin-bottom:12px"></div>
 
+  <!-- Copiloto financiero (Presupuesto Base) -->
+  <div id="dash-copiloto"></div>
+
   <!-- Saldo principal -->
   <div class="g3" id="dash-saldo" style="margin-bottom:12px"></div>
 
@@ -1093,15 +1096,13 @@ function renderSalud(){
     ${tips.slice(0,3).map(t=>`<div class="al ${t.c}" style="margin-bottom:5px"><span>${t.t}</span></div>`).join('')}`;
 }
 function renderCopiloto(){
+  const el=document.getElementById('dash-copiloto');
+  if(!el)return;
   const pres=calcPresupuesto();
-  const el=document.getElementById('dash-salud');
-  if(!pres)return;
+  if(!pres){el.innerHTML='';return;}
   const mc=pres.margen>=0?'var(--green)':'var(--red)';
   const mm=pres.margen>=0?'al-g':'al-e';
-  const extra=document.createElement('div');
-  extra.className='card';
-  extra.style.marginBottom='12px';
-  extra.innerHTML=`
+  el.innerHTML=`<div class="card" style="margin-bottom:12px">
     <div class="ct"><div class="ctl"><i class="ti ti-plane"></i>Copiloto financiero</div>
     <button class="btn bgh bxs" onclick="go('proyeccion')" style="color:var(--m1)">Ver detalle →</button></div>
     <div class="g3" style="margin-bottom:10px">
@@ -1112,8 +1113,8 @@ function renderCopiloto(){
       <div class="metric"><div class="ml">Margen seguridad</div><div class="mv" style="color:${mc}">${fS(pres.margen)}</div></div>
     </div>
     <div class="al ${mm}"><i class="ti ti-shield"></i>
-    <span>${pres.margen>=0?`Margen real: <strong>${fS(pres.margen)}</strong>. Puedes tomar decisiones con seguridad.`:`Margen negativo. Revisa tus compromisos antes de gastar.`}</span></div>`;
-  el.parentNode.insertBefore(extra, el.nextSibling);
+    <span>${pres.margen>=0?`Margen real: <strong>${fS(pres.margen)}</strong>. Puedes tomar decisiones con seguridad.`:`Margen negativo. Revisa tus compromisos antes de gastar.`}</span></div>
+  </div>`;
 }
 function renderAlerts(){
   const mes=getMes();const{ing,gas,deu,saldo,comprometido}=calcMes(mes);
