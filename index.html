@@ -826,14 +826,10 @@ function calcMes(mes){
   const disponible=Math.max(0,saldo-comprometido);
   return{ing,gas,ahorro:ing-gas,deu,pre,pat,fijos,saldo,comprometido,disponible};
 }
-let _presCache=null,_presCacheKey=null;
-function invalidarCachePres(){_presCache=null;_presCacheKey=null;}
-function calcPresupuesto(){
+function calcPresupuesto()
   if(!db.presupuestoBase||!db.presupuestoBase.length)return null;
   const activos=db.presupuestoBase.filter(p=>p.activo);
   if(!activos.length)return null;
-  const cacheKey=getMes()+'_'+activos.length+'_'+db.movimientos.length;
-  if(_presCache&&_presCacheKey===cacheKey)return _presCache;
 
   // Ingreso esperado: promedio de los últimos 3 meses con ingresos > 0
   const ms=getLast6().slice(-3);
