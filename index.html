@@ -1288,7 +1288,7 @@ function renderFE(){
   }
   fillPersonaSelects(['fe-per']);
 }
-function guardarPer(){
+ffunction guardarPer(){const n=document.getElementById('pp-n').value.trim();if(!n){toast('Ingresa nombre');return;}db.personas.push({id:Date.now(),nombre:n,alias:document.getElementById('pp-a').value,relacion:document.getElementById('pp-r').value,tipo:document.getElementById('pp-t').value,tel:document.getElementById('pp-tel').value});const base=db.personas[0]?.nombre;if(base&&db.cats.gasto[base]&&!db.cats.gasto[n])db.cats.gasto[n]=[...db.cats.gasto[base]];if(base&&db.cats.ingreso[base]&&!db.cats.ingreso[n])db.cats.ingreso[n]=[...db.cats.ingreso[base]];save();renderPers();renderPersonaBtns();fillPersonaSelects(['f-per','mt-p','d-per','p-pre','fe-per','ev-r'],true);renderDashTabs();closeMN();toast('✓ Guardado');}
 // ── Te Abrazo + MÚLTIPLES FUENTES ────────────────────────────────────────
 function initFuentes(){
   if(!db.fuentes)db.fuentes=[{id:1,nombre:'Te Abrazo'}];
