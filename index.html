@@ -226,6 +226,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <button class="ni" onclick="go('metas')" id="ni-metas"><i class="ti ti-target"></i>Metas</button>
     <button class="ni" onclick="go('deudas')" id="ni-deudas"><i class="ti ti-credit-card"></i>Deudas</button>
     <button class="ni" onclick="go('prestamos')" id="ni-prestamos"><i class="ti ti-handshake"></i>Me Deben</button>
+    <button class="ni" onclick="go('emergencia')" id="ni-emergencia"><i class="ti ti-shield"></i>Fondo Emergencia</button>
     <button class="ni" onclick="go('proyeccion')" id="ni-proyeccion"><i class="ti ti-trending-up"></i>Proyección</button>
 
     <div class="sb-sec">🧩 Trabajo</div>
@@ -487,7 +488,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
   <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-edit"></i>Actualizar</div></div>
 
-    <div class="fg3"><div class="fgrp"><label>Persona</label><select id="fe-per"></select></div>
+    <div class="fg3"><div class="fgrp"><label>Persona</label><select id="fe-per"></select></div><div class="fgrp"><label>Monto actual (S/)</label><input type="number" id="fe-mn" placeholder="0.00" step="0.01"></div><div class="fgrp"><label>Meta (S/)</label><input type="number" id="fe-mt" placeholder="0.00" step="0.01"></div></div>
     <button class="btn bp bfw" onclick="guardarFE()"><i class="ti ti-check"></i> Actualizar</button>
   </div>
 </div>
@@ -1270,8 +1271,24 @@ function cobrarP(id){const p=db.prestamos.find(x=>x.id===id);if(!p)return;const 
 function elimP(id){db.prestamos=db.prestamos.filter(p=>p.id!==id);save();renderPrest();}
 
 function guardarFE(){const per=document.getElementById('fe-per').value,mn=parseFloat(document.getElementById('fe-mn').value)||0,mt=parseFloat(document.getElementById('fe-mt').value)||0;const ex=db.fe.find(f=>f.persona===per);if(ex){ex.monto=mn;ex.meta=mt;}else{db.fe.push({persona:per,monto:mn,meta:mt});}save();renderFE();toast('✓ Actualizado');}
-function guardarPer(){const n=document.getElementById('pp-n').value.trim();if(!n){toast('Ingresa nombre');return;}db.personas.push({id:Date.now(),nombre:n,alias:document.getElementById('pp-a').value,relacion:document.getElementById('pp-r').value,tipo:document.getElementById('pp-t').value,tel:document.getElementById('pp-tel').value});const base=db.personas[0]?.nombre;if(base&&db.cats.gasto[base]&&!db.cats.gasto[n])db.cats.gasto[n]=[...db.cats.gasto[base]];if(base&&db.cats.ingreso[base]&&!db.cats.ingreso[n])db.cats.ingreso[n]=[...db.cats.ingreso[base]];save();renderPers();renderPersonaBtns();fillPersonaSelects(['f-per','mt-p','d-per','p-pre','fe-per','ev-r'],true);renderDashTabs();closeMN();toast('✓ Guardado');}
-
+function renderFE(){
+  const tot=db.fe.reduce((s,f)=>s+f.monto,0);
+  const{gas}=calcMes(getMes());
+  const mc=gas>0?(tot/gas).toFixed(1):0;
+  document.getElementById('fe-tot').textContent=fS(tot);
+  document.getElementById('fe-mes').textContent=`Cubre aprox. ${mc} mes(es) de gastos`;
+  const grid=document.getElementById('fe-personas-grid');
+  if(grid){
+    grid.innerHTML=db.personas.map(p=>{
+      const f=db.fe.find(x=>x.persona===p.nombre)||{monto:0,meta:1000};
+      const pct=f.meta>0?Math.min(100,(f.monto/f.meta)*100):0;
+      const fc=pct>=75?'pg':pct>=40?'pa':'pm';
+      return`<div class="card"><div class="ct"><div class="ctl"><i class="ti ti-user"></i>${p.nombre}</div></div><div style="font-size:20px;font-weight:800;color:var(--m1)">${fS(f.monto)}</div><div class="prog"><div class="pf ${fc}" style="width:${pct.toFixed(0)}%"></div></div><div style="font-size:11px;color:var(--text3)">${pct.toFixed(0)}% de ${fS(f.meta)}</div></div>`;
+    }).join('');
+  }
+  fillPersonaSelects(['fe-per']);
+}
+function guardarPer(){
 // ── Te Abrazo + MÚLTIPLES FUENTES ────────────────────────────────────────
 function initFuentes(){
   if(!db.fuentes)db.fuentes=[{id:1,nombre:'Te Abrazo'}];
