@@ -1270,7 +1270,26 @@ function renderPrest(){const el=document.getElementById('lista-prestamos');const
 function cobrarP(id){const p=db.prestamos.find(x=>x.id===id);if(!p)return;const a=parseFloat(document.getElementById('pa-'+id).value)||0;if(a<=0)return;p.saldo=parseFloat(Math.max(0,p.saldo-a).toFixed(2));p.hist.push({fecha:new Date().toISOString().split('T')[0],monto:a});save();renderPrest();if(p.saldo===0)toast('✅ ¡Cobrado!');else toast('✓ Registrado');}
 function elimP(id){db.prestamos=db.prestamos.filter(p=>p.id!==id);save();renderPrest();}
 
-function guardarFE(){const per=document.getElementById('fe-per').value,mn=parseFloat(document.getElementById('fe-mn').value)||0,mt=parseFloat(document.getElementById('fe-mt').value)||0;const ex=db.fe.find(f=>f.persona===per);if(ex){ex.monto=mn;ex.meta=mt;}else{db.fe.push({persona:per,monto:mn,meta:mt});}save();renderFE();toast('✓ Actualizado');}
+function guardarFE(){
+  const per = document.getElementById('fe-per').value;
+  const mn = parseFloat(document.getElementById('fe-mn').value) || 0;
+  const mt = parseFloat(document.getElementById('fe-mt').value) || 0;
+
+  db.fe = db.fe || [];
+
+  const ex = db.fe.find(f => f.persona === per);
+
+  if(ex){
+    ex.monto = mn;
+    ex.meta = mt;
+  } else {
+    db.fe.push({ persona: per, monto: mn, meta: mt });
+  }
+
+  save();
+  renderFE();
+  toast('✓ Actualizado');
+}
 function renderFE(){
   const tot=db.fe.reduce((s,f)=>s+f.monto,0);
   const{gas}=calcMes(getMes());
@@ -1288,7 +1307,12 @@ function renderFE(){
   }
   fillPersonaSelects(['fe-per']);
 }
-ffunction guardarPer(){const n=document.getElementById('pp-n').value.trim();if(!n){toast('Ingresa nombre');return;}db.personas.push({id:Date.now(),nombre:n,alias:document.getElementById('pp-a').value,relacion:document.getElementById('pp-r').value,tipo:document.getElementById('pp-t').value,tel:document.getElementById('pp-tel').value});const base=db.personas[0]?.nombre;if(base&&db.cats.gasto[base]&&!db.cats.gasto[n])db.cats.gasto[n]=[...db.cats.gasto[base]];if(base&&db.cats.ingreso[base]&&!db.cats.ingreso[n])db.cats.ingreso[n]=[...db.cats.ingreso[base]];save();renderPers();renderPersonaBtns();fillPersonaSelects(['f-per','mt-p','d-per','p-pre','fe-per','ev-r'],true);renderDashTabs();closeMN();toast('✓ Guardado');}
+function guardarPer(){
+  const n=document.getElementById('pp-n').value.trim();
+  if(!n){toast('Ingresa nombre');return;}db.personas.push({id:Date.now(),nombre:n,alias:document.getElementById('pp-a').value,relacion:document.getElementById('pp-r').value,tipo:document.getElementById('pp-t').value,tel:document.getElementById('pp-tel').value});
+  const base=db.personas[0]?.nombre;if(base&&db.cats.gasto[base]&&!db.cats.gasto[n])db.cats.gasto[n]=[...db.cats.gasto[base]];
+  if(base&&db.cats.ingreso[base]&&!db.cats.ingreso[n])db.cats.ingreso[n]=[...db.cats.ingreso[base]];save();renderPers();renderPersonaBtns();fillPersonaSelects(['f-per','mt-p','d-per','p-pre','fe-per','ev-r'],true);renderDashTabs();closeMN();toast('✓ Guardado');
+}
 // ── Te Abrazo + MÚLTIPLES FUENTES ────────────────────────────────────────
 function initFuentes(){
   if(!db.fuentes)db.fuentes=[{id:1,nombre:'Te Abrazo'}];
