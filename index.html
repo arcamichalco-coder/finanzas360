@@ -214,41 +214,44 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
   </div>
   <nav class="sb-nav">
 
-    <div class="sb-sec">🏠 Principal</div>
+    <div class="sb-sec">🏠 Inicio</div>
     <button class="ni active" onclick="go('dashboard')" id="ni-dashboard"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+    <button class="ni" onclick="go('registrar')" id="ni-registrar"><i class="ti ti-circle-plus"></i>Registrar</button>
     <button class="ni" onclick="go('actividad')" id="ni-actividad"><i class="ti ti-bell"></i>Actividad<span class="bc" id="nc" style="display:none">0</span></button>
-    <button class="ni" onclick="go('asistente')" id="ni-asistente"><i class="ti ti-sparkles"></i>Asistente ✨</button>
+    <button class="ni" onclick="go('historial')" id="ni-historial"><i class="ti ti-list"></i>Historial</button>
 
     <div class="sb-sec">💰 Finanzas</div>
-    <button class="ni" onclick="go('registrar')" id="ni-registrar"><i class="ti ti-circle-plus"></i>Registrar</button>
-    <button class="ni" onclick="go('historial')" id="ni-historial"><i class="ti ti-list"></i>Historial</button>
+    <button class="ni" onclick="go('proyeccion')" id="ni-proyeccion"><i class="ti ti-trending-up"></i>Proyección</button>
     <button class="ni" onclick="go('cuentas')" id="ni-cuentas"><i class="ti ti-wallet"></i>Cuentas</button>
     <button class="ni" onclick="go('metas')" id="ni-metas"><i class="ti ti-target"></i>Metas</button>
     <button class="ni" onclick="go('deudas')" id="ni-deudas"><i class="ti ti-credit-card"></i>Deudas</button>
     <button class="ni" onclick="go('prestamos')" id="ni-prestamos"><i class="ti ti-handshake"></i>Me Deben</button>
     <button class="ni" onclick="go('emergencia')" id="ni-emergencia"><i class="ti ti-shield"></i>Fondo Emergencia</button>
-    <button class="ni" onclick="go('proyeccion')" id="ni-proyeccion"><i class="ti ti-trending-up"></i>Proyección</button>
+    <button class="ni" onclick="go('fijos')" id="ni-fijos"><i class="ti ti-repeat"></i>Compromisos</button>
 
-    <div class="sb-sec">🧩 Trabajo</div>
+    <div class="sb-sec">🤝 Compartido</div>
+    <button class="ni" onclick="go('personas')" id="ni-personas"><i class="ti ti-users"></i>Participantes</button>
+    <button class="ni" onclick="go('hogar')" id="ni-hogar"><i class="ti ti-home"></i>Gastos compartidos</button>
+    <button class="ni" onclick="go('servicios')" id="ni-servicios"><i class="ti ti-device-tv"></i>Servicios</button>
+
+    <div class="sb-sec">🗓️ Organización</div>
+    <button class="ni" onclick="go('calendario')" id="ni-calendario"><i class="ti ti-calendar"></i>Calendario</button>
+    <button class="ni" onclick="go('agenda')" id="ni-agenda"><i class="ti ti-checklist"></i>Agenda</button>
+
+    <div class="sb-sec">⚙️ Herramientas</div>
+    <button class="ni" onclick="go('patrimonio')" id="ni-patrimonio"><i class="ti ti-building"></i>Patrimonio</button>
+    <button class="ni" onclick="go('asistente')" id="ni-asistente"><i class="ti ti-sparkles"></i>Asistente ✨</button>
+    <button class="ni" onclick="go('reportes')" id="ni-reportes"><i class="ti ti-chart-bar"></i>Reportes</button>
+    <button class="ni" onclick="go('config')" id="ni-config"><i class="ti ti-settings"></i>Configuración</button>
+
+    <div class="sb-sec">🧩 Trabajo e ingresos</div>
     <button class="ni" onclick="go('consultorio')" id="ni-consultorio"><i class="ti ti-brain"></i>Te Abrazo</button>
     <button class="ni" onclick="go('pacientes')" id="ni-pacientes"><i class="ti ti-user-heart"></i>Pacientes propios</button>
     <button class="ni" onclick="go('reportes-trabajo')" id="ni-reportes-trabajo"><i class="ti ti-chart-bar"></i>Reportes laborales</button>
 
-    <div class="sb-sec">🏡 Hogar y Servicios</div>
-    <button class="ni" onclick="go('hogar')" id="ni-hogar"><i class="ti ti-home"></i>Hogar compartido</button>
-    <button class="ni" onclick="go('servicios')" id="ni-servicios"><i class="ti ti-device-tv"></i>Servicios</button>
-    <button class="ni" onclick="go('fijos')" id="ni-fijos"><i class="ti ti-repeat"></i>Gastos fijos</button>
-
-    <div class="sb-sec">📂 Más</div>
-    <button class="ni" onclick="go('personas')" id="ni-personas"><i class="ti ti-users"></i>Participantes</button>
-    <button class="ni" onclick="go('patrimonio')" id="ni-patrimonio"><i class="ti ti-building"></i>Patrimonio</button>
-    <button class="ni" onclick="go('calendario')" id="ni-calendario"><i class="ti ti-calendar"></i>Calendario</button>
-    <button class="ni" onclick="go('reportes')" id="ni-reportes"><i class="ti ti-chart-bar"></i>Reportes</button>
-    <button class="ni" onclick="go('agenda')" id="ni-agenda"><i class="ti ti-checklist"></i>Agenda</button>
-
-    <div class="sb-sec">⚙️ Sistema</div>
-    <button class="ni" onclick="go('config')" id="ni-config"><i class="ti ti-settings"></i>Configuración</button>
+    <div class="sb-sec">🔧 Sistema</div>
     <button class="ni" onclick="toggleDark()"><i class="ti ti-moon"></i>Modo oscuro</button>
+
     <button class="ni" onclick="fbSignOut()" style="color:#E53E3E"><i class="ti ti-logout"></i>Cerrar sesión</button>
 
   </nav>
@@ -277,8 +280,13 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
   <!-- Salud financiera -->
   <div class="card" id="dash-salud" style="margin-bottom:12px"></div>
 
+  <!-- Estado financiero (educativo, complementa a Salud financiera) -->
+  <div id="dash-estado"></div>
+
   <!-- Copiloto financiero (Presupuesto Base) -->
   <div id="dash-copiloto"></div>
+
+  <div class="al al-m"><i class="ti ti-bulb"></i><span>💡 El dinero libre es el dinero que aún no tiene un destino asignado.</span></div>
 
   <!-- Saldo principal -->
   <div class="g3" id="dash-saldo" style="margin-bottom:12px"></div>
@@ -329,6 +337,9 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
   <!-- Saludo inteligente -->
   <div class="card" id="ai-saludo" style="margin-bottom:12px"></div>
+
+  <!-- Estado financiero (educativo) -->
+  <div id="ai-estado"></div>
 
   <!-- Análisis automático -->
   <div class="card" style="margin-bottom:12px">
@@ -444,6 +455,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- METAS -->
 <div class="screen" id="screen-metas">
+  <div class="al al-m"><i class="ti ti-bulb"></i><span>💡 Divide una meta grande en metas pequeñas para mantener la motivación.</span></div>
   <div class="card">
     <div class="ct"><div class="ctl"><i class="ti ti-plus"></i>Nueva meta</div></div>
     <div class="fg2"><div class="fgrp"><label>Nombre</label><input type="text" id="mt-n" placeholder="Tablet, Operación, Viaje..."></div><div class="fgrp"><label>Persona</label><select id="mt-p"></select></div></div>
@@ -461,6 +473,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- DEUDAS -->
 <div class="screen" id="screen-deudas">
+  <div class="al al-m"><i class="ti ti-bulb"></i><span>💡 Prioriza las deudas con mayor impacto antes que las más pequeñas.</span></div>
   <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-plus"></i>Nueva deuda (yo debo)</div></div>
     <div class="fg2"><div class="fgrp"><label>Le debo a...</label><input type="text" id="d-ac" placeholder="Nombre"></div><div class="fgrp"><label>Responsable</label><select id="d-per"></select></div></div>
     <div class="fg2"><div class="fgrp"><label>Monto (S/)</label><input type="number" id="d-mn" placeholder="0.00" step="0.01"></div><div class="fgrp"><label>Prioridad</label><select id="d-pr"><option>Alta</option><option>Media</option><option>Baja</option></select></div></div>
@@ -473,7 +486,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 <!-- PRÉSTAMOS -->
 <div class="screen" id="screen-prestamos">
   <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-plus"></i>Nuevo préstamo (me deben)</div></div>
-    <div class="fg2"><div class="fgrp"><label>Me debe...</label><input type="text" id="p-deu" placeholder="Nombre"></div><div class="fgrp"><label>Lo prestó</label><select id="p-pre"><option>Camila</option><option>Mamá</option></select></div></div>
+    <div class="fg2"><div class="fgrp"><label>Me debe...</label><input type="text" id="p-deu" placeholder="Nombre"></div><div class="fgrp"><label>Lo prestó</label><select id="p-pre"></select></div></div>
     <div class="fg2"><div class="fgrp"><label>Monto (S/)</label><input type="number" id="p-mn" placeholder="0.00" step="0.01"></div><div class="fgrp"><label>Fecha</label><input type="date" id="p-fe"></div></div>
     <div class="fgrp"><label>Motivo</label><input type="text" id="p-mo" placeholder="Por qué..."></div>
     <button class="btn bp bfw" onclick="guardarPrestamo()"><i class="ti ti-check"></i> Guardar</button>
@@ -483,6 +496,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- EMERGENCIA -->
 <div class="screen" id="screen-emergencia">
+  <div class="al al-m"><i class="ti ti-bulb"></i><span>💡 Lo ideal es construir entre 3 y 6 meses de respaldo.</span></div>
   <div class="hcard hc-m" style="margin-bottom:12px"><div style="font-size:11px;opacity:0.85;margin-bottom:4px">FONDO DE EMERGENCIA TOTAL</div><div id="fe-tot" style="font-size:30px;font-weight:800"></div><div id="fe-mes" style="font-size:12px;opacity:0.8;margin-top:4px"></div></div>
   <div class="g2" style="margin-bottom:12px" id="fe-personas-grid"></div>
 
@@ -495,6 +509,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- PROYECCIÓN -->
 <div class="screen" id="screen-proyeccion">
+  <div class="al al-m"><i class="ti ti-bulb"></i><span>💡 Un presupuesto no busca restringirte, busca darte claridad.</span></div>
 
   <!-- PRESUPUESTO BASE: sección colapsable superior -->
   <div class="card" style="margin-bottom:12px">
@@ -657,7 +672,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <div class="card"><div class="ct"><div class="ctl"><i class="ti ti-plus"></i>Nuevo evento</div></div>
       <div class="fg2"><div class="fgrp"><label>Nombre</label><input type="text" id="ev-n" placeholder="Pago alquiler..."></div><div class="fgrp"><label>Tipo</label><select id="ev-t"><option value="fijo">Gasto fijo</option><option value="cobro">Cobro</option><option value="meta">Meta</option><option value="recordatorio">Recordatorio</option></select></div></div>
       <div class="fg2"><div class="fgrp"><label>Monto (S/)</label><input type="number" id="ev-m" placeholder="0.00" step="0.01"></div><div class="fgrp"><label>Día del mes</label><input type="number" id="ev-d" placeholder="1-31" min="1" max="31"></div></div>
-      <div class="fg2"><div class="fgrp"><label>Responsable</label><select id="ev-r"><option>Camila</option><option>Mamá</option><option>Ambas</option></select></div><div class="fgrp"><label>Categoría</label><input type="text" id="ev-c" placeholder="Servicios..."></div></div>
+      <div class="fg2"><div class="fgrp"><label>Responsable</label><select id="ev-r"></select></div><div class="fgrp"><label>Categoría</label><input type="text" id="ev-c" placeholder="Servicios..."></div></div>
       <div class="fgrp"><label>Nota</label><input type="text" id="ev-nt"></div>
       <button class="btn bp bfw" onclick="guardarEvento()"><i class="ti ti-check"></i> Guardar</button>
     </div>
@@ -723,8 +738,8 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 <div class="mov" id="mov" onclick="closeMod(event)"><div class="modal"><div class="mh"></div><div id="mbd"></div></div></div>
 <div id="toast"></div>
 <script>
-const DC={gasto:{Camila:['Pasajes','Plataformas digitales','Cuidado personal','Formación profesional','Colegiatura','Salud','Compras personales','Snacks y antojos','Delivery','Cafés','Compras impulsivas','Ropa','Entretenimiento','Tecnología'],'Mamá':['Alquiler','Banco','Transporte','Salud','Mercado','Gastos personales','Compras pequeñas','Extras de mercado'],Hogar:['Agua','Luz','Gas','Internet','Mercado hogar','Limpieza','Mejoras','Reparaciones','Alquiler hogar']},ingreso:{Camila:['Ingresos del mes','Otros ingresos'],'Mamá':['Sueldo','Ingresos adicionales','Otros apoyos'],Hogar:['Aportes familiares','Otros']}};
-const DSC={gasto:{Camila:{'Salud':['Consulta médica','Medicamentos','Laboratorio','Emergencia','Óptica'],'Cuidado personal':['Peluquería','Cosméticos','Estética','Depilación'],'Formación profesional':['Cursos','Libros','Materiales','Congresos'],'Snacks y antojos':['Bodega','Delivery','Cafetería','Kiosco'],'Tecnología':['Equipos','Accesorios','Suscripciones'],'Pasajes':['Bus','Taxi','Uber','Combi']},'Mamá':{'Mercado':['Verduras','Carnes','Limpieza','Abarrotes'],'Salud':['Consulta','Medicamentos','Exámenes']},Hogar:{'Mercado hogar':['Verduras','Carnes','Limpieza','Abarrotes'],'Mejoras':['Muebles','Electrodomésticos','Decoración']}},ingreso:{Camila:{},'Mamá':{},Hogar:{}}};
+const DC={gasto:{'Participante 1':['Pasajes','Plataformas digitales','Cuidado personal','Formación profesional','Colegiatura','Salud','Compras personales','Snacks y antojos','Delivery','Cafés','Compras impulsivas','Ropa','Entretenimiento','Tecnología'],'Participante 2':['Alquiler','Banco','Transporte','Salud','Mercado','Gastos personales','Compras pequeñas','Extras de mercado'],Hogar:['Agua','Luz','Gas','Internet','Mercado hogar','Limpieza','Mejoras','Reparaciones','Alquiler hogar']},ingreso:{'Participante 1':['Ingresos del mes','Otros ingresos'],'Participante 2':['Sueldo','Ingresos adicionales','Otros apoyos'],Hogar:['Aportes familiares','Otros']}};
+const DSC={gasto:{'Participante 1':{'Salud':['Consulta médica','Medicamentos','Laboratorio','Emergencia','Óptica'],'Cuidado personal':['Peluquería','Cosméticos','Estética','Depilación'],'Formación profesional':['Cursos','Libros','Materiales','Congresos'],'Snacks y antojos':['Bodega','Delivery','Cafetería','Kiosco'],'Tecnología':['Equipos','Accesorios','Suscripciones'],'Pasajes':['Bus','Taxi','Uber','Combi']},'Participante 2':{'Mercado':['Verduras','Carnes','Limpieza','Abarrotes'],'Salud':['Consulta','Medicamentos','Exámenes']},Hogar:{'Mercado hogar':['Verduras','Carnes','Limpieza','Abarrotes'],'Mejoras':['Muebles','Electrodomésticos','Decoración']}},ingreso:{'Participante 1':{},'Participante 2':{},Hogar:{}}};
 const HC=['Snacks y antojos','Delivery','Cafés','Compras impulsivas','Compras pequeñas','Extras de mercado'];
 let MT='gasto',PR='',CF=new Date(),AT='pend',DT='todo',PBopen=false;
 let db={movimientos:[],deudas:[],prestamos:[],metas:[],patrimonio_a:[],patrimonio_p:[],serv_o:[],serv_s:[],eventos:[],pacientes:[],personas:[],tareas:[],notifs:[],fe:[],metaAnual:{v:0,y:new Date().getFullYear()},cuentas:[],cats:JSON.parse(JSON.stringify(DC)),subcats:JSON.parse(JSON.stringify(DSC)),presupuestoBase:[]};
@@ -861,6 +876,39 @@ function calcPresupuesto(){
 };
 
 }
+function calcEstadoFinanciero(){
+  // Función de SOLO LECTURA. Lee resultados de calcMes() y calcPresupuesto()
+  // sin modificar ninguna línea de esas funciones. Traduce a 4 niveles educativos.
+  const mes=calcMes(getMes());
+  const pres=calcPresupuesto(); // puede ser null si no hay presupuesto configurado
+
+  let puntos=0;
+
+  // Factor 1: disponible vs saldo
+  if(mes.saldo>0){
+    const ratioDisp=mes.disponible/mes.saldo;
+    if(ratioDisp>=0.5)puntos+=2;else if(ratioDisp>=0.2)puntos+=1;
+  }
+
+  // Factor 2: deudas activas
+  if(mes.deu===0)puntos+=2;else if(mes.saldo>0&&mes.deu/mes.saldo<=0.5)puntos+=1;
+
+  // Factor 3: margen de seguridad (solo si hay presupuesto configurado)
+  if(pres){
+    if(pres.margen>=0)puntos+=2;else if(pres.libre>=0)puntos+=1;
+  }
+
+  // Factor 4: ahorro del mes
+  if(mes.ahorro>0)puntos+=2;else if(mes.ahorro===0)puntos+=1;
+
+  const max=pres?8:6;
+  const ratio=max>0?puntos/max:0;
+
+  if(ratio>=0.75)return{nivel:'estable',emoji:'🟢',label:'Estable',mensaje:'Vas por buen camino.'};
+  if(ratio>=0.5)return{nivel:'ajustado',emoji:'🟡',label:'Ajustado',mensaje:'Hay algunos compromisos que requieren atención.'};
+  if(ratio>=0.25)return{nivel:'riesgo_moderado',emoji:'🟠',label:'Riesgo moderado',mensaje:'Conviene priorizar pagos importantes este mes.'};
+  return{nivel:'riesgo_alto',emoji:'🔴',label:'Riesgo alto',mensaje:'Sería recomendable fortalecer tu fondo de emergencia.'};
+}
 function getSem(i,g,d){if(!i&&!g)return 'a';const r=i>0?g/i:1;if(d>0&&r>1)return 'r';if(r>0.85)return 'a';return 'v';}
 function openMod(html){document.getElementById('mbd').innerHTML=html;document.getElementById('mov').classList.add('open');}
 function closeMod(e){if(e.target===document.getElementById('mov'))document.getElementById('mov').classList.remove('open');}
@@ -870,7 +918,7 @@ function closeSB(){document.getElementById('sidebar').classList.remove('open');d
 function ingCons(mes){return db.pacientes.reduce((s,p)=>{const ses=(p.sesiones||[]).filter(se=>se.fecha&&se.fecha.startsWith(mes)&&se.estado==='realizada');const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+ses.length*g;},0);}
 function ingConsPend(){return db.pacientes.reduce((s,p)=>{const n=(p.sesiones||[]).filter(se=>se.estado==='pendiente').length;const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+n*g;},0);}
 
-const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Te Abrazo',pacientes:'Pacientes Propios','reportes-trabajo':'Reportes Laborales',hogar:'Hogar Compartido',servicios:'Servicios',fijos:'Gastos Fijos',personas:'Participantes',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};
+const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Te Abrazo',pacientes:'Pacientes Propios','reportes-trabajo':'Reportes Laborales',hogar:'Gastos Compartidos',servicios:'Servicios',fijos:'Compromisos',personas:'Participantes',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};
 function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
@@ -938,13 +986,14 @@ function renderDash(){
     renderSalud();
     renderCharts();
     renderCopiloto();
+    renderEstadoFinanciero();
   } else {
     renderDashPersona(DT,mes);
   }
 }
 function renderDashTabs(){
   const personas=['todo',...db.personas.map(p=>p.nombre),'Hogar'];
-  const icons={todo:'🌐',Camila:'💚',Mamá:'🌸',Hogar:'🏠'};
+  const icons={todo:'🌐',Hogar:'🏠'};
   document.getElementById('dash-tabs').innerHTML=personas.map(p=>`
     <button class="pb-btn ${DT===p?'active':''}" onclick="setDT('${p}')">
       ${icons[p]||'👤'} ${p==='todo'?'Todo':p}
@@ -972,7 +1021,7 @@ function renderDashPersona(per,mes){
   const totalFijos=fijos.reduce((s,e)=>s+reservaMes(e),0);
   const deudas=db.deudas.filter(d=>d.persona===per);
   const totalDeudas=deudas.reduce((s,d)=>s+d.saldo,0);
-  const icons={Camila:'💚',Mamá:'🌸',Hogar:'🏠'};
+  const icons={Hogar:'🏠'};
 
   document.getElementById('topbar-sem').innerHTML='';
   document.getElementById('dash-saldo').innerHTML=`
@@ -1125,6 +1174,13 @@ function renderCopiloto(){
     <span>${pres.margen>=0?`Margen real: <strong>${fS(pres.margen)}</strong>. Puedes tomar decisiones con seguridad.`:`Margen negativo. Revisa tus compromisos antes de gastar.`}</span></div>
   </div>`;
 }
+function renderEstadoFinanciero(){
+  const el=document.getElementById('dash-estado');
+  if(!el)return;
+  const estado=calcEstadoFinanciero();
+  const colores={estable:'al-g',ajustado:'al-a',riesgo_moderado:'al-a',riesgo_alto:'al-e'};
+  el.innerHTML=`<div class="al ${colores[estado.nivel]||'al-m'}" style="margin-bottom:12px"><span style="font-size:18px">${estado.emoji}</span><span><strong>${estado.label}.</strong> ${estado.mensaje}</span></div>`;
+}
 function renderAlerts(){
   const mes=getMes();const{ing,gas,deu,saldo,comprometido}=calcMes(mes);
   const dia=new Date().getDate(),diasMes=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
@@ -1254,7 +1310,7 @@ function guardarMeta(){const n=document.getElementById('mt-n').value.trim(),c=pa
 function renderMetas(){
   if(document.getElementById('ma-v')){document.getElementById('ma-v').value=db.metaAnual.v||'';document.getElementById('ma-y').value=db.metaAnual.y;renderMAP();}
   const el=document.getElementById('lista-metas');if(!db.metas.length){el.innerHTML='<div class="empty"><i class="ti ti-target"></i>Sin metas</div>';return;}
-  el.innerHTML=db.metas.map(m=>{const pct=m.costo>0?Math.min(100,(m.ahorro/m.costo)*100):0;const falt=m.costo-m.ahorro;const mes=m.aporte>0?Math.ceil(falt/m.aporte):null;const fc=pct>=75?'pg':pct>=40?'pa':'pm';const pc={Camila:'bm','Mamá':'brp',Familiar:'bg'}[m.persona]||'bm';const prc={Alta:'br',Media:'ba',Baja:'bg'}[m.pr]||'ba';return`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-weight:700">${m.nombre} <span class="badge ${pc}">${m.persona}</span> <span class="badge ${prc}">${m.pr}</span></div>${m.nota?`<div style="font-size:11px;color:var(--text3)">📝 ${m.nota}</div>`:''}</div><div style="display:flex;gap:5px"><span class="badge ba">${pct.toFixed(0)}%</span><button class="btn bgh bxs" onclick="editM(${m.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button><button class="btn bgh bxs" onclick="elimM(${m.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button></div></div><div class="prog"><div class="pf ${fc}" style="width:${pct.toFixed(0)}%"></div></div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:3px"><span>${fS(m.ahorro)} / ${fS(m.costo)}</span><span>${mes?`~${mes} meses`:`Faltan ${fS(falt)}`}</span></div><div style="display:flex;gap:6px;margin-top:8px"><input type="number" placeholder="Abonar S/" id="ma-${m.id}" step="0.01" style="flex:1;margin:0"><button class="btn bp bsm" onclick="abonarM(${m.id})">+ Abonar</button></div></div>`;}).join('');}
+  el.innerHTML=db.metas.map(m=>{const pct=m.costo>0?Math.min(100,(m.ahorro/m.costo)*100):0;const falt=m.costo-m.ahorro;const mes=m.aporte>0?Math.ceil(falt/m.aporte):null;const fc=pct>=75?'pg':pct>=40?'pa':'pm';const idxP=db.personas.findIndex(p=>p.nombre===m.persona);const paletaB=['bm','brp','bg','bv'];const pc=idxP>=0?paletaB[idxP%paletaB.length]:'bm';const prc={Alta:'br',Media:'ba',Baja:'bg'}[m.pr]||'ba';return`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div><div style="font-weight:700">${m.nombre} <span class="badge ${pc}">${m.persona}</span> <span class="badge ${prc}">${m.pr}</span></div>${m.nota?`<div style="font-size:11px;color:var(--text3)">📝 ${m.nota}</div>`:''}</div><div style="display:flex;gap:5px"><span class="badge ba">${pct.toFixed(0)}%</span><button class="btn bgh bxs" onclick="editM(${m.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button><button class="btn bgh bxs" onclick="elimM(${m.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button></div></div><div class="prog"><div class="pf ${fc}" style="width:${pct.toFixed(0)}%"></div></div><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:3px"><span>${fS(m.ahorro)} / ${fS(m.costo)}</span><span>${mes?`~${mes} meses`:`Faltan ${fS(falt)}`}</span></div><div style="display:flex;gap:6px;margin-top:8px"><input type="number" placeholder="Abonar S/" id="ma-${m.id}" step="0.01" style="flex:1;margin:0"><button class="btn bp bsm" onclick="abonarM(${m.id})">+ Abonar</button></div></div>`;}).join('');}
 function abonarM(id){const m=db.metas.find(x=>x.id===id);if(!m)return;const a=parseFloat(document.getElementById('ma-'+id).value)||0;if(a<=0)return;m.ahorro=parseFloat(Math.min(m.costo,m.ahorro+a).toFixed(2));save();renderMetas();if(m.ahorro>=m.costo)toast('🎉 ¡Meta alcanzada!');else toast('✓ Abono registrado');}
 function elimM(id){db.metas=db.metas.filter(m=>m.id!==id);save();renderMetas();}
 function editM(id){const m=db.metas.find(x=>x.id===id);if(!m)return;openMod(`<div class="mt2"><span>✏️ Editar meta</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div class="fgrp"><label>Nombre</label><input type="text" id="em-n" value="${m.nombre}"></div><div class="fg2"><div class="fgrp"><label>Costo</label><input type="number" id="em-c" value="${m.costo}" step="0.01"></div><div class="fgrp"><label>Ahorro actual</label><input type="number" id="em-a" value="${m.ahorro}" step="0.01"></div></div><div class="fg2"><div class="fgrp"><label>Aporte mensual</label><input type="number" id="em-m" value="${m.aporte}" step="0.01"></div><div class="fgrp"><label>Fecha</label><input type="date" id="em-f" value="${m.fecha}"></div></div><div class="fgrp"><label>Nota</label><input type="text" id="em-nt" value="${m.nota||''}"></div><button class="btn bp bfw" onclick="sEditM(${id})"><i class="ti ti-check"></i> Guardar</button>`);}
@@ -1890,6 +1946,10 @@ function renderAI(){
         <div style="font-size:12px;color:var(--text3);margin-top:4px">Quedan <strong>${diasRest} días</strong> en ${nombreMes}.</div>
       </div>
     </div>`;
+
+  const estadoFin=calcEstadoFinanciero();
+  const coloresEstado={estable:'al-g',ajustado:'al-a',riesgo_moderado:'al-a',riesgo_alto:'al-e'};
+  document.getElementById('ai-estado').innerHTML=`<div class="al ${coloresEstado[estadoFin.nivel]||'al-m'}" style="margin-bottom:12px"><span style="font-size:18px">${estadoFin.emoji}</span><span><strong>${estadoFin.label}.</strong> ${estadoFin.mensaje}</span></div>`;
 
   // Análisis automático con lenguaje cálido
   const msgs=[];
