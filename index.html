@@ -240,7 +240,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
     <button class="ni" onclick="go('fijos')" id="ni-fijos"><i class="ti ti-repeat"></i>Gastos fijos</button>
 
     <div class="sb-sec">📂 Más</div>
-    <button class="ni" onclick="go('personas')" id="ni-personas"><i class="ti ti-users"></i>Personas</button>
+    <button class="ni" onclick="go('personas')" id="ni-personas"><i class="ti ti-users"></i>Participantes</button>
     <button class="ni" onclick="go('patrimonio')" id="ni-patrimonio"><i class="ti ti-building"></i>Patrimonio</button>
     <button class="ni" onclick="go('calendario')" id="ni-calendario"><i class="ti ti-calendar"></i>Calendario</button>
     <button class="ni" onclick="go('reportes')" id="ni-reportes"><i class="ti ti-chart-bar"></i>Reportes</button>
@@ -870,7 +870,7 @@ function closeSB(){document.getElementById('sidebar').classList.remove('open');d
 function ingCons(mes){return db.pacientes.reduce((s,p)=>{const ses=(p.sesiones||[]).filter(se=>se.fecha&&se.fecha.startsWith(mes)&&se.estado==='realizada');const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+ses.length*g;},0);}
 function ingConsPend(){return db.pacientes.reduce((s,p)=>{const n=(p.sesiones||[]).filter(se=>se.estado==='pendiente').length;const g=p.tipo==='propio'?p.ps||0:(p.ps||0)*(p.pct||50)/100;return s+n*g;},0);}
 
-const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Te Abrazo',pacientes:'Pacientes Propios','reportes-trabajo':'Reportes Laborales',hogar:'Hogar Compartido',servicios:'Servicios',fijos:'Gastos Fijos',personas:'Personas',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};
+const TITLES={dashboard:'Dashboard',actividad:'Centro de Actividad',asistente:'Asistente ✨',registrar:'Registrar',historial:'Historial',cuentas:'Mis Cuentas',metas:'Metas',deudas:'Deudas',prestamos:'Me Deben',emergencia:'Fondo Emergencia',proyeccion:'Proyección',consultorio:'Te Abrazo',pacientes:'Pacientes Propios','reportes-trabajo':'Reportes Laborales',hogar:'Hogar Compartido',servicios:'Servicios',fijos:'Gastos Fijos',personas:'Participantes',patrimonio:'Patrimonio',calendario:'Calendario',reportes:'Reportes',agenda:'Agenda',config:'Configuración'};
 function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(b=>b.classList.remove('active'));
@@ -1307,9 +1307,19 @@ function renderFE(){
   }
   fillPersonaSelects(['fe-per']);
 }
+const ROL_A_TIPO_INTERNO={conviviente:'Familiar',profesional:'Cliente',externo:'Acreedor',dependiente:'Familiar',colaborador:'Otro'};
 function guardarPer(){
   const n=document.getElementById('pp-n').value.trim();
-  if(!n){toast('Ingresa nombre');return;}db.personas.push({id:Date.now(),nombre:n,alias:document.getElementById('pp-a').value,relacion:document.getElementById('pp-r').value,tipo:document.getElementById('pp-t').value,tel:document.getElementById('pp-tel').value});
+  if(!n){toast('Ingresa nombre');return;}
+  const rolesSeleccionados=[...document.querySelectorAll('#pp-roles .pb-btn.active')].map(b=>b.dataset.rol);
+  const idEdit=document.getElementById('pp-id')?.value;
+  const tipoInterno=rolesSeleccionados.length?(ROL_A_TIPO_INTERNO[rolesSeleccionados[0]]||'Otro'):'Otro';
+  if(idEdit){
+    const p=db.personas.find(x=>x.id==idEdit);
+    if(p){p.nombre=n;p.alias=document.getElementById('pp-a').value;p.relacion=document.getElementById('pp-r').value;p.tel=document.getElementById('pp-tel').value;p.roles=rolesSeleccionados;if(!p.tipo)p.tipo=tipoInterno;}
+    save();renderPers();closeMN();toast('✓ Guardado');return;
+  }
+  db.personas.push({id:Date.now(),nombre:n,alias:document.getElementById('pp-a').value,relacion:document.getElementById('pp-r').value,tipo:tipoInterno,tel:document.getElementById('pp-tel').value,roles:rolesSeleccionados});
   const base=db.personas[0]?.nombre;if(base&&db.cats.gasto[base]&&!db.cats.gasto[n])db.cats.gasto[n]=[...db.cats.gasto[base]];
   if(base&&db.cats.ingreso[base]&&!db.cats.ingreso[n])db.cats.ingreso[n]=[...db.cats.ingreso[base]];save();renderPers();renderPersonaBtns();fillPersonaSelects(['f-per','mt-p','d-per','p-pre','fe-per','ev-r'],true);renderDashTabs();closeMN();toast('✓ Guardado');
 }
@@ -1823,8 +1833,16 @@ function mkPaid(id,mk,undo=false){
 }
 function elimEv(id){db.eventos=db.eventos.filter(e=>e.id!==id);save();renderFijos();renderCal();}
 
-function openNPer(){openMod(`<div class="mt2"><span>👤 Nueva persona</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div class="fg2"><div class="fgrp"><label>Nombre</label><input type="text" id="pp-n"></div><div class="fgrp"><label>Alias</label><input type="text" id="pp-a"></div></div><div class="fg2"><div class="fgrp"><label>Relación</label><input type="text" id="pp-r" placeholder="Amiga, Colega..."></div><div class="fgrp"><label>Tipo</label><select id="pp-t"><option>Familiar</option><option>Cliente</option><option>Acreedor</option><option>Deudor</option><option>Arrendador</option><option>Otro</option></select></div></div><div class="fgrp"><label>Teléfono</label><input type="text" id="pp-tel"></div><button class="btn bp bfw" onclick="guardarPer()"><i class="ti ti-check"></i> Guardar</button>`);}
-function renderPers(){const el=document.getElementById('lista-per');if(!db.personas.length){el.innerHTML='<div class="empty"><i class="ti ti-users"></i>Sin personas</div>';return;}el.innerHTML=db.personas.map(p=>`<div class="pc-card"><div class="pc-av">${p.nombre.charAt(0).toUpperCase()}</div><div style="flex:1"><div style="font-weight:700">${p.nombre}${p.alias?' ('+p.alias+')':''}</div><div style="font-size:12px;color:var(--text2)">${p.relacion} · <span class="chip">${p.tipo}</span>${p.tel?' · '+p.tel:''}</div></div><button class="btn bgh bxs" onclick="elimPer(${p.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button></div>`).join('');}
+const ROLES_DEF=[{v:'conviviente',l:'🏠 Conviviente'},{v:'colaborador',l:'🤝 Colaborador'},{v:'externo',l:'🔁 Externo'},{v:'dependiente',l:'👶 Dependiente'},{v:'profesional',l:'💼 Profesional'}];
+const TIPO_A_ROL_SUGERIDO={Familiar:'conviviente',Cliente:'profesional',Acreedor:'externo',Deudor:'externo',Arrendador:'externo',Otro:''};
+function openNPer(id){
+  const p=id?db.personas.find(x=>x.id===id):null;
+  // Roles a mostrar: si ya tiene roles guardados, esos. Si no, sugerencia temporal calculada desde 'tipo' (nunca se guarda hasta presionar Guardar).
+  const rolesActivos=p&&p.roles&&p.roles.length?p.roles:(p&&TIPO_A_ROL_SUGERIDO[p.tipo]?[TIPO_A_ROL_SUGERIDO[p.tipo]]:[]);
+  const esSugerencia=p&&!(p.roles&&p.roles.length)&&rolesActivos.length>0;
+  openMod(`<div class="mt2"><span>👤 ${p?'Editar participante':'Nuevo participante'}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div class="fg2"><div class="fgrp"><label>Nombre</label><input type="text" id="pp-n" value="${p?p.nombre:''}"></div><div class="fgrp"><label>Alias (opcional)</label><input type="text" id="pp-a" value="${p?p.alias||'':''}"></div></div><div class="fg2"><div class="fgrp"><label>Relación (opcional)</label><input type="text" id="pp-r" placeholder="Amiga, Colega..." value="${p?p.relacion||'':''}"></div><div class="fgrp"><label>Teléfono (opcional)</label><input type="text" id="pp-tel" value="${p?p.tel||'':''}"></div></div><div class="fgrp"><label>Roles (opcional, puedes elegir varios)</label><div id="pp-roles" style="display:flex;flex-wrap:wrap;gap:6px">${ROLES_DEF.map(r=>`<button type="button" class="pb-btn ${rolesActivos.includes(r.v)?'active':''}" data-rol="${r.v}" onclick="this.classList.toggle('active')">${r.l}</button>`).join('')}</div>${esSugerencia?'<div style="font-size:11px;color:var(--text3);margin-top:5px;font-style:italic">💡 Sugerido a partir de tu información anterior — puedes ajustarlo libremente</div>':''}</div><input type="hidden" id="pp-id" value="${p?p.id:''}"><button class="btn bp bfw" onclick="guardarPer()"><i class="ti ti-check"></i> Guardar</button>`);}
+const ROLES_LABEL={conviviente:'🏠 Conviviente',colaborador:'🤝 Colaborador',externo:'🔁 Externo',dependiente:'👶 Dependiente',profesional:'💼 Profesional'};
+function renderPers(){const el=document.getElementById('lista-per');if(!db.personas.length){el.innerHTML='<div class="empty"><i class="ti ti-users"></i>Sin personas</div>';return;}el.innerHTML=db.personas.map(p=>{const rolesChips=(p.roles||[]).map(r=>`<span class="chip">${ROLES_LABEL[r]||r}</span>`).join(' ');return`<div class="pc-card"><div class="pc-av">${p.nombre.charAt(0).toUpperCase()}</div><div style="flex:1"><div style="font-weight:700">${p.nombre}${p.alias?' ('+p.alias+')':''}</div><div style="font-size:12px;color:var(--text2)">${p.relacion||''}${p.tel?' · '+p.tel:''}</div>${rolesChips?`<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px">${rolesChips}</div>`:''}</div><div style="display:flex;gap:4px"><button class="btn bgh bxs" onclick="openNPer(${p.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button><button class="btn bgh bxs" onclick="elimPer(${p.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button></div></div>`;}).join('');}
 function elimPer(id){db.personas=db.personas.filter(p=>p.id!==id);save();renderPers();}
 
 function openNPat(tp){openMod(`<div class="mt2"><span>${tp==='a'?'📈 Nuevo activo':'📉 Nuevo pasivo'}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div><div class="fg2"><div class="fgrp"><label>Nombre</label><input type="text" id="pat-n"></div><div class="fgrp"><label>Categoría</label><select id="pat-c">${tp==='a'?'<option>Efectivo</option><option>Banco</option><option>Equipo</option><option>Electrónico</option><option>Terreno</option><option>Construcción</option><option>Mueble</option><option>Vehículo</option><option>Otro</option>':'<option>Deuda</option><option>Préstamo</option><option>Crédito</option><option>Otro</option>'}</select></div></div><div class="fg2"><div class="fgrp"><label>Valor (S/)</label><input type="number" id="pat-v" placeholder="0.00" step="0.01"></div><div class="fgrp"><label>Propietario</label><select id="pat-p"></select></div></div><div class="fgrp"><label>Estado</label><input type="text" id="pat-e"></div><button class="btn bp bfw" onclick="guardarPat('${tp}')"><i class="ti ti-check"></i> Guardar</button>`);setTimeout(()=>fillPersonaSelects(['pat-p']),0);}
