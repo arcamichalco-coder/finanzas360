@@ -601,7 +601,7 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
 
 <!-- HOGAR -->
 <div class="screen" id="screen-hogar">
-  <div class="hcard hc-m" style="margin-bottom:12px"><div style="font-size:11px;opacity:0.85">HOGAR COMPARTIDO — ESTE MES</div><div id="hogar-tot" style="font-size:26px;font-weight:800">S/ 0.00</div></div>
+  <div class="hcard hc-m" style="margin-bottom:12px"><div style="font-size:11px;opacity:0.85">GASTOS COMPARTIDOS — ESTE MES</div><div id="hogar-tot" style="font-size:26px;font-weight:800">S/ 0.00</div></div>
   <div class="g2" id="hogar-ap" style="margin-bottom:12px"></div>
   <div class="sec-h"><span class="sec-ht"><i class="ti ti-home"></i> Gastos del hogar</span><button class="btn bp bsm" onclick="go('registrar');setPR('Hogar');setMT('gasto')"><i class="ti ti-plus"></i> Registrar</button></div>
   <div id="hogar-list"></div>
@@ -989,7 +989,7 @@ function renderDashTabs(){
   const icons={todo:'🌐',Hogar:'🏠'};
   document.getElementById('dash-tabs').innerHTML=personas.map(p=>`
     <button class="pb-btn ${DT===p?'active':''}" onclick="setDT('${p}')">
-      ${icons[p]||'👤'} ${p==='todo'?'Todo':p}
+      ${icons[p]||'👤'} ${p==='todo'?'Todo':etiquetaVisible(p)}
     </button>`).join('');
 }
 function setDT(p){
@@ -1044,7 +1044,7 @@ function renderDashPersona(per,mes){
 
   // Gastos fijos de esta persona
   document.getElementById('dash-cons').innerHTML=`
-    <div class="ct"><div class="ctl"><i class="ti ti-repeat"></i>Gastos fijos — ${icons[per]||'👤'} ${per}</div>
+    <div class="ct"><div class="ctl"><i class="ti ti-repeat"></i>Gastos fijos — ${icons[per]||'👤'} ${etiquetaVisible(per)}</div>
     <button class="btn bgh bxs" onclick="go('fijos')" style="color:var(--m1)">Ver todos →</button></div>
     ${fijos.length?fijos.sort((a,b)=>a.dia-b.dia).map(e=>{
       const paid=e.pm[mes];
@@ -1830,7 +1830,7 @@ function renderFijos(){
     const pTotal=pFijos.reduce((s,e)=>s+reservaMes(e),0);
     html+=`<div class="card">
       <div class="ct">
-        <div class="ctl">👤 ${per} <span style="font-size:12px;color:var(--text3);font-weight:400">— ${fS(pTotal)}/mes estimado</span></div>
+        <div class="ctl">👤 ${etiquetaVisible(per)} <span style="font-size:12px;color:var(--text3);font-weight:400">— ${fS(pTotal)}/mes estimado</span></div>
       </div>
       ${pFijos.map(e=>{
         const paid=e.pm[mes];
@@ -1909,7 +1909,7 @@ function setRT(t){['a','q','c','p','m'].forEach(x=>{document.getElementById('rp-
 function renderRA(){const ms=getLast12();const iA=ms.map(m=>db.movimientos.filter(x=>x.fecha&&x.fecha.startsWith(m)&&x.tipo==='ingreso').reduce((s,x)=>s+x.monto,0));const gA=ms.map(m=>db.movimientos.filter(x=>x.fecha&&x.fecha.startsWith(m)&&x.tipo==='gasto').reduce((s,x)=>s+x.monto,0));const aA=iA.map((v,i)=>v-gA[i]);const lb=ms.map(m=>{const d=new Date(m+'-01');return d.toLocaleDateString('es-PE',{month:'short',year:'2-digit'});});const tI=iA.reduce((s,v)=>s+v,0),tG=gA.reduce((s,v)=>s+v,0),tA=aA.reduce((s,v)=>s+v,0);const{v,y}=db.metaAnual,aY=aA.filter((vv,i)=>ms[i].startsWith(y)).reduce((s,vv)=>s+(vv>0?vv:0),0),pM=v>0?Math.min(100,(aY/v)*100):0;document.getElementById('rep-ma').innerHTML=v>0?`<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Meta ${y}: <strong>${fS(v)}</strong></span><span>Ahorrado: <strong class="cg">${fS(aY)}</strong></span></div><div class="prog"><div class="pf ${pM>=75?'pg':pM>=40?'pa':'pm'}" style="width:${pM.toFixed(0)}%"></div></div><div style="font-size:12px;color:var(--text2);margin-top:4px">${pM.toFixed(0)}% completado</div>`:'<p style="color:var(--text3);font-size:13px">Configura tu meta anual en Metas.</p>';const c=document.getElementById('cAnual');if(c._ch)c._ch.destroy();c._ch=new Chart(c,{type:'bar',data:{labels:lb,datasets:[{label:'Ingresos',data:iA,backgroundColor:'#A8D8C8',borderRadius:4},{label:'Gastos',data:gA,backgroundColor:'#F4C7D9',borderRadius:4},{label:'Ahorro',data:aA,type:'line',borderColor:'#7BC4AE',backgroundColor:'rgba(123,196,174,0.1)',fill:true,tension:0.4,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10,family:'Poppins'},boxWidth:10}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:9}}}}}});document.getElementById('rep-tabla').innerHTML=`<table><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Ahorro</th><th>%</th></tr></thead><tbody>`+ms.map((m,i)=>`<tr><td>${lb[i]}</td><td class="pos">+${fS(iA[i])}</td><td class="neg">-${fS(gA[i])}</td><td class="${aA[i]>=0?'pos':'neg'}">${aA[i]>=0?'+':''}${fS(aA[i])}</td><td>${iA[i]>0?((aA[i]/iA[i])*100).toFixed(0):'—'}%</td></tr>`).join('')+`<tr style="font-weight:700;background:var(--m3)"><td>TOTAL</td><td class="pos">+${fS(tI)}</td><td class="neg">-${fS(tG)}</td><td class="${tA>=0?'pos':'neg'}">${tA>=0?'+':''}${fS(tA)}</td><td>${tI>0?((tA/tI)*100).toFixed(0):'—'}%</td></tr></tbody></table>`;}
 function renderRQ(){const q=document.getElementById('rq-q').value,mes=document.getElementById('rq-mes').value;if(!mes){toast('Selecciona mes');return;}const[y,m]=mes.split('-').map(Number),dMin=q==='1'?1:16,dMax=q==='1'?15:new Date(y,m,0).getDate();const movs=db.movimientos.filter(mv=>{if(!mv.fecha)return false;const d=new Date(mv.fecha);return d.getFullYear()===y&&d.getMonth()===m-1&&d.getDate()>=dMin&&d.getDate()<=dMax;});const ing=movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0),gas=movs.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0),liq=ingCons(mes)/2;document.getElementById('rq-ct').innerHTML=`<div class="card"><div class="g3" style="margin-bottom:10px"><div class="metric"><div class="ml">Ingresos</div><div class="mv cg">+${fS(ing)}</div></div><div class="metric"><div class="ml">Gastos</div><div class="mv cr">-${fS(gas)}</div></div><div class="metric"><div class="ml">Consultorio est.</div><div class="mv cp">${fS(liq)}</div></div></div><div class="tw"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Persona</th><th>Monto</th></tr></thead><tbody>${movs.map(m=>`<tr><td>${m.fecha}</td><td>${m.categoria}${m.subcategoria?' · '+m.subcategoria:''}</td><td><span class="chip">${m.persona}</span></td><td class="${m.tipo==='ingreso'?'pos':'neg'}">${m.tipo==='ingreso'?'+':'-'}${fS(m.monto)}</td></tr>`).join('')}</tbody></table></div></div>`;}
 function renderRC(){const mes=document.getElementById('rc-mes')?.value||getMes();const movs=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&m.tipo==='gasto');const cT={};movs.forEach(m=>{cT[m.categoria]=(cT[m.categoria]||0)+m.monto;});const tot=Object.values(cT).reduce((s,v)=>s+v,0);const el=document.getElementById('rc-ct');if(!Object.keys(cT).length){el.innerHTML='<div class="empty"><i class="ti ti-chart-bar"></i>Sin datos</div>';return;}el.innerHTML='<div class="card">'+Object.entries(cT).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>{const pct=tot>0?(val/tot)*100:0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px"><span>${cat}</span><span class="neg">${fS(val)} (${pct.toFixed(0)}%)</span></div><div class="prog"><div class="pf pm" style="width:${pct.toFixed(0)}%"></div></div></div>`;}).join('')+'</div>';}
-function renderRP(){const mes=document.getElementById('rp-mes')?.value||getMes();const el=document.getElementById('rp-ct');el.innerHTML='';[...db.personas.map(p=>p.nombre),'Hogar'].forEach(per=>{const movs=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&m.persona===per);const ing=movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0),gas=movs.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0);el.innerHTML+=`<div class="card"><div style="font-weight:700;margin-bottom:8px">👤 ${per}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge bg">+${fS(ing)}</span><span class="badge br">-${fS(gas)}</span><span class="badge ${ing-gas>=0?'bm':'ba'}">${ing-gas>=0?'Ahorro':'Déficit'} ${fS(Math.abs(ing-gas))}</span></div></div>`;});}
+function renderRP(){const mes=document.getElementById('rp-mes')?.value||getMes();const el=document.getElementById('rp-ct');el.innerHTML='';[...db.personas.map(p=>p.nombre),'Hogar'].forEach(per=>{const movs=db.movimientos.filter(m=>m.fecha&&m.fecha.startsWith(mes)&&m.persona===per);const ing=movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0),gas=movs.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0);el.innerHTML+=`<div class="card"><div style="font-weight:700;margin-bottom:8px">👤 ${etiquetaVisible(per)}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="badge bg">+${fS(ing)}</span><span class="badge br">-${fS(gas)}</span><span class="badge ${ing-gas>=0?'bm':'ba'}">${ing-gas>=0?'Ahorro':'Déficit'} ${fS(Math.abs(ing-gas))}</span></div></div>`;});}
 
 function renderAI(){
   const mes=getMes();
@@ -2260,7 +2260,7 @@ function renderCC(){
   const perSel=document.getElementById('cfg-per');
   const personasAct=[...getPersonasNombres(),'Hogar'];
   const valActual=perSel.value;
-  perSel.innerHTML=personasAct.map(p=>`<option>${p}</option>`).join('');
+  perSel.innerHTML=personasAct.map(p=>`<option value="${p}">${etiquetaVisible(p)}</option>`).join('');
   if(personasAct.includes(valActual))perSel.value=valActual;
   const tp=document.getElementById('cfg-tp').value,per=document.getElementById('cfg-per').value;
   const cats=(db.cats[tp]||{})[per]||[];
