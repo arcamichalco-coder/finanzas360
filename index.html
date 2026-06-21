@@ -800,26 +800,19 @@ function getPersonasNombres(){
 
 }
 
+function etiquetaVisible(clave){
+  return clave==='Hogar'?'Gastos compartidos':clave;
+}
 function fillPersonaSelects(ids, incluirHogar=false){
-
-  const nombres=[...db.personas.map(p=>p.nombre)];
-
+ const nombres=[...db.personas.map(p=>p.nombre)];
   if(incluirHogar&&!nombres.includes('Hogar'))nombres.push('Hogar');
-
   const opts=nombres.map(n=>`<option>${n}</option>`).join('');
-
   ids.forEach(id=>{
-
     const el=document.getElementById(id);
-
     if(!el)return;
-
     const prev=el.value;
-
     el.innerHTML=opts;
-
     if(nombres.includes(prev))el.value=prev;
-
   });
 
 }
