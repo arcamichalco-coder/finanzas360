@@ -644,6 +644,22 @@ body.dark{--bg:#0F172A;--bg2:#1E293B;--border:#334155;--border2:#475569;--text:#
         <div class="fgrp"><label>Categoría</label><input type="text" id="nf-c" placeholder="Servicios, Banco..."></div>
       </div>
       <div class="fgrp"><label>Nota</label><input type="text" id="nf-nt" placeholder="Observación..."></div>
+      <div class="fgrp" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="nf-aporte-check" onchange="document.getElementById('nf-aporte-sel').style.display=this.checked?'block':'none'" style="width:16px;height:16px">
+        <label style="margin:0;cursor:pointer" for="nf-aporte-check">Generar un aporte para otro participante (opcional)</label>
+      </div>
+      <div id="nf-aporte-sel" style="display:none;margin-top:6px">
+        <div class="fgrp"><label>¿A quién se le acredita este aporte?</label><select id="nf-aporte-a"></select></div>
+      </div>
+      <div class="fgrp" style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <input type="checkbox" id="nf-comp-check" onchange="toggleCompartido('nf')" style="width:16px;height:16px">
+        <label style="margin:0;cursor:pointer" for="nf-comp-check">Compartir este gasto con otros participantes (solo informativo)</label>
+      </div>
+      <div id="nf-comp-sel" style="display:none;margin-top:6px">
+        <div id="nf-comp-lista"></div>
+        <button type="button" class="btn bgh bsm" onclick="agregarFilaCompartido('nf')" style="color:var(--m1)"><i class="ti ti-plus"></i> Agregar participante</button>
+        <div id="nf-comp-suma" style="font-size:12px;margin-top:6px;font-weight:600"></div>
+      </div>
       <button class="btn bp bfw" onclick="guardarFijo()"><i class="ti ti-check"></i> Guardar gasto fijo</button>
     </div>
   </div>
@@ -787,7 +803,7 @@ function initDef(){
   {id:7,nombre:'Amazon',tipo:'fijo',monto:25,dia:18,resp:'Camila',cat:'Suscripciones',nota:'',pm:{},freq:'mensual'},
   {id:8,nombre:'Gas',tipo:'fijo',monto:55,dia:20,resp:'Mamá',cat:'Servicios',nota:'',pm:{},freq:'cada2'},
   {id:9,nombre:'Hera (baño)',tipo:'fijo',monto:60,dia:18,resp:'Camila',cat:'Mascota',nota:'',pm:{},freq:'cada3'},
-  {id:10,nombre:'Aporte a Mamá',tipo:'fijo',monto:113,dia:9,resp:'Camila',cat:'Aporte a Mamá',nota:'Para cubrir déficit del hogar',pm:{},freq:'mensual',aporteMama:true},
+  {id:10,nombre:'Aporte a Mamá',tipo:'fijo',monto:113,dia:9,resp:'Camila',cat:'Aporte mensual',nota:'Para cubrir déficit del hogar',pm:{},freq:'mensual',aporteA:2},
 ];
   if(!db.personas.length)db.personas=[{id:1,nombre:'Camila',alias:'Yo',relacion:'Personal',tipo:'Familiar'},{id:2,nombre:'Mamá',alias:'Mamá',relacion:'Familiar',tipo:'Familiar'}];
   if(!db.cuentas.length)db.cuentas=[{id:1,nombre:'Efectivo',saldo:0,tipo:'Efectivo'},{id:2,nombre:'Yape',saldo:0,tipo:'Digital'},{id:3,nombre:'BCP',saldo:0,tipo:'Banco'}];
@@ -1738,6 +1754,87 @@ function elimSS(id){db.serv_s=db.serv_s.filter(s=>s.id!==id);save();renderServs(
   function toggleFijosForm(){
   const f=document.getElementById('fijos-form');
   f.style.display=f.style.display==='none'?'block':'none';
+  fillPersonaSelects(['nf-aporte-a']);
+}
+
+function toggleCompartido(prefix){
+  const check=document.getElementById(`${prefix}-comp-check`);
+  const sel=document.getElementById(`${prefix}-comp-sel`);
+  sel.style.display=check.checked?'block':'none';
+  if(check.checked&&!window[`_compartidoTemp_${prefix}`]){
+    window[`_compartidoTemp_${prefix}`]=[];
+    const resp=prefix==='nf'?document.getElementById('nf-r').value:document.getElementById('ef-r').value;
+    renderFilasCompartido(prefix,resp);
+  }
+}
+
+function agregarFilaCompartido(prefix){
+  const temp=window[`_compartidoTemp_${prefix}`]||(window[`_compartidoTemp_${prefix}`]=[]);
+  const usados=temp.map(t=>t.id);
+  const disponible=db.personas.find(p=>!usados.includes(p.id));
+  if(!disponible){toast('No hay más participantes disponibles');return;}
+  temp.push({id:disponible.id,porcentaje:0,manual:false});
+  const resp=prefix==='nf'?document.getElementById('nf-r').value:document.getElementById('ef-r').value;
+  renderFilasCompartido(prefix,resp);
+}
+
+function quitarFilaCompartido(prefix,idx){
+  const temp=window[`_compartidoTemp_${prefix}`]||[];
+  temp.splice(idx,1);
+  const resp=prefix==='nf'?document.getElementById('nf-r').value:document.getElementById('ef-r').value;
+  renderFilasCompartido(prefix,resp);
+}
+
+function actualizarPctCompartido(prefix,idx,valor){
+  const temp=window[`_compartidoTemp_${prefix}`]||[];
+  temp[idx].porcentaje=parseFloat(valor)||0;
+  temp[idx].manual=true;
+  const resp=prefix==='nf'?document.getElementById('nf-r').value:document.getElementById('ef-r').value;
+  renderFilasCompartido(prefix,resp,false);
+}
+
+function renderFilasCompartido(prefix,respNombre,recalcularResp=true){
+  const temp=window[`_compartidoTemp_${prefix}`]||[];
+  if(recalcularResp){
+    const sumaOtros=temp.reduce((s,t)=>s+t.porcentaje,0);
+    window[`_pctResponsable_${prefix}`]=Math.max(0,100-sumaOtros);
+  }
+  const pctResp=window[`_pctResponsable_${prefix}`]||0;
+  const lista=document.getElementById(`${prefix}-comp-lista`);
+  lista.innerHTML=temp.map((t,idx)=>{
+    const p=db.personas.find(x=>x.id===t.id);
+    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="flex:1;font-size:13px">${p?p.nombre:'—'}</span>
+      <input type="number" value="${t.porcentaje}" min="0" max="100" style="width:70px;margin:0" oninput="actualizarPctCompartido('${prefix}',${idx},this.value)">
+      <span style="font-size:12px;color:var(--text3)">%</span>
+      <button type="button" class="btn bgh bxs" onclick="quitarFilaCompartido('${prefix}',${idx})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }).join('')+`<div style="display:flex;align-items:center;gap:8px;padding-top:6px;border-top:1px dashed var(--border)">
+    <span style="flex:1;font-size:13px;font-weight:600">${etiquetaVisible(respNombre)} (responsable)</span>
+    <input type="number" id="${prefix}-comp-resp" value="${pctResp.toFixed(1)}" min="0" max="100" style="width:70px;margin:0" oninput="window._pctResponsable_${prefix}=parseFloat(this.value)||0;renderFilasCompartido('${prefix}','${respNombre}',false)">
+    <span style="font-size:12px;color:var(--text3)">%</span>
+    <span style="width:24px"></span>
+  </div>`;
+  const suma=temp.reduce((s,t)=>s+t.porcentaje,0)+(window[`_pctResponsable_${prefix}`]||0);
+  const sumaEl=document.getElementById(`${prefix}-comp-suma`);
+  const ok=Math.abs(suma-100)<0.01;
+  sumaEl.innerHTML=`Suma total: ${suma.toFixed(1)}% ${ok?'<span style="color:var(--green)">✓ Correcto</span>':'<span style="color:var(--red)">⚠ Debe sumar 100%</span>'}`;
+}
+
+function validarYObtenerCompartido(prefix,respNombre){
+  const check=document.getElementById(`${prefix}-comp-check`);
+  if(!check||!check.checked)return null;
+  const temp=window[`_compartidoTemp_${prefix}`]||[];
+  const pctResp=window[`_pctResponsable_${prefix}`]||0;
+  const suma=temp.reduce((s,t)=>s+t.porcentaje,0)+pctResp;
+  if(Math.abs(suma-100)>0.01){
+    toast('⚠ Los porcentajes deben sumar exactamente 100%');
+    return'invalid';
+  }
+  const resultado=temp.map(t=>({id:t.id,porcentaje:t.porcentaje}));
+  const respPersona=db.personas.find(p=>p.nombre===respNombre);
+  if(respPersona)resultado.push({id:respPersona.id,porcentaje:pctResp});
+  return resultado;
 }
 
 function freqLabel(f){return{mensual:'Mensual',cada2:'Cada 2 meses',cada3:'Cada 3 meses',anual:'Anual'}[f]||f;}
@@ -1749,16 +1846,29 @@ function guardarFijo(){
   const m=parseFloat(document.getElementById('nf-m').value)||0;
   const d=parseInt(document.getElementById('nf-d').value)||1;
   if(!n||!m){toast('Completa nombre y monto');return;}
-  db.eventos.push({
+  const generaAporte=document.getElementById('nf-aporte-check')?.checked;
+  const aporteA=generaAporte?(parseInt(document.getElementById('nf-aporte-a')?.value)||null):null;
+  const respNombre=document.getElementById('nf-r').value;
+  const compartidoCon=validarYObtenerCompartido('nf',respNombre);
+  if(compartidoCon==='invalid')return;
+  const nuevoEvento={
     id:Date.now(),nombre:n,tipo:'fijo',monto:m,dia:d,
-    resp:document.getElementById('nf-r').value,
+    resp:respNombre,
     cat:document.getElementById('nf-c').value||'General',
     nota:document.getElementById('nf-nt').value,
     pm:{},freq:document.getElementById('nf-f').value
-  });
+  };
+  if(aporteA)nuevoEvento.aporteA=aporteA;
+  if(compartidoCon)nuevoEvento.compartidoCon=compartidoCon;
+  db.eventos.push(nuevoEvento);
   save();
   ['nf-n','nf-m','nf-d','nf-c','nf-nt'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('nf-f').value='mensual';
+  document.getElementById('nf-aporte-check').checked=false;
+  document.getElementById('nf-aporte-sel').style.display='none';
+  document.getElementById('nf-comp-check').checked=false;
+  document.getElementById('nf-comp-sel').style.display='none';
+  window._compartidoTemp_nf=null;window._pctResponsable_nf=null;
   document.getElementById('fijos-form').style.display='none';
   renderFijos();renderCal();toast('✓ Gasto fijo guardado');
 }
@@ -1788,9 +1898,31 @@ function editarFijo(id){
     <div class="fgrp"><label>Categoría</label><input type="text" id="ef-c" value="${e.cat||''}"></div>
     <div class="fgrp"><label>Nota</label><input type="text" id="ef-nt" value="${e.nota||''}"></div>
   </div>
+  <div class="fgrp" style="display:flex;align-items:center;gap:8px">
+    <input type="checkbox" id="ef-aporte-check" ${e.aporteA?'checked':''} onchange="document.getElementById('ef-aporte-sel').style.display=this.checked?'block':'none'" style="width:16px;height:16px">
+    <label style="margin:0;cursor:pointer" for="ef-aporte-check">Generar un aporte para otro participante (opcional)</label>
+  </div>
+  <div id="ef-aporte-sel" style="display:${e.aporteA?'block':'none'};margin-top:6px">
+    <div class="fgrp"><label>¿A quién se le acredita este aporte?</label><select id="ef-aporte-a"></select></div>
+  </div>
+  <div class="fgrp" style="display:flex;align-items:center;gap:8px;margin-top:8px">
+    <input type="checkbox" id="ef-comp-check" ${e.compartidoCon&&e.compartidoCon.length?'checked':''} onchange="toggleCompartido('ef')" style="width:16px;height:16px">
+    <label style="margin:0;cursor:pointer" for="ef-comp-check">Compartir este gasto con otros participantes (solo informativo)</label>
+  </div>
+  <div id="ef-comp-sel" style="display:${e.compartidoCon&&e.compartidoCon.length?'block':'none'};margin-top:6px">
+    <div id="ef-comp-lista"></div>
+    <button type="button" class="btn bgh bsm" onclick="agregarFilaCompartido('ef')" style="color:var(--m1)"><i class="ti ti-plus"></i> Agregar participante</button>
+    <div id="ef-comp-suma" style="font-size:12px;margin-top:6px;font-weight:600"></div>
+  </div>
   <button class="btn bp bfw" onclick="saveEF(${id})"><i class="ti ti-check"></i> Guardar cambios</button>`);
   fillPersonaSelects(['ef-r'],true);
   document.getElementById('ef-r').value=e.resp;
+  fillPersonaSelects(['ef-aporte-a']);
+  if(e.aporteA)document.getElementById('ef-aporte-a').value=e.aporteA;
+  if(e.compartidoCon&&e.compartidoCon.length){
+    window._compartidoTemp_ef=JSON.parse(JSON.stringify(e.compartidoCon));
+    renderFilasCompartido('ef',e.resp);
+  }
 }
 
 function saveEF(id){
@@ -1802,6 +1934,17 @@ function saveEF(id){
   e.freq=document.getElementById('ef-f').value;
   e.cat=document.getElementById('ef-c').value;
   e.nota=document.getElementById('ef-nt').value;
+  const generaAporte=document.getElementById('ef-aporte-check')?.checked;
+  if(generaAporte){
+    const dest=parseInt(document.getElementById('ef-aporte-a')?.value)||null;
+    if(dest)e.aporteA=dest;else delete e.aporteA;
+  }else{
+    delete e.aporteA;
+  }
+  const compartidoCon=validarYObtenerCompartido('ef',e.resp);
+  if(compartidoCon==='invalid')return;
+  if(compartidoCon)e.compartidoCon=compartidoCon;else delete e.compartidoCon;
+  window._compartidoTemp_ef=null;window._pctResponsable_ef=null;
   save();closeMN();renderFijos();renderCal();toast('✓ Actualizado');
 }
 
@@ -1837,22 +1980,26 @@ function renderFijos(){
         const venc=e.dia<=hoy&&!paid;
         const reserva=reservaMes(e);
         const esFreqExtra=e.freq&&e.freq!=='mensual';
+        const mesesCubiertos=mesesAdelantadosPendientes(e);
         return`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:.5px solid var(--border)">
           <div style="flex:1">
             <div style="display:flex;align-items:center;gap:6px">
               <span style="font-weight:600;font-size:13px">${e.nombre}</span>
               ${venc?'<span class="badge br">Vencido</span>':''}
               ${paid?'<span class="badge bg">✓ Pagado</span>':''}
+              ${mesesCubiertos.length?`<span class="badge bm">✓ Cubierto hasta ${mesesCubiertos[mesesCubiertos.length-1].label}</span>`:''}
             </div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px">
               Día ${e.dia} · ${freqLabel(e.freq||'mensual')} · ${e.cat||''}
               ${esFreqExtra?` · <span style="color:var(--amber)">Reservar ${fS(reserva)}/mes</span>`:''}
               ${e.nota?` · ${e.nota}`:''}
             </div>
+            ${e.compartidoCon&&e.compartidoCon.length?`<div style="font-size:11px;color:var(--m1);margin-top:3px">🤝 Compartido: ${e.compartidoCon.map(c=>{const p=db.personas.find(x=>x.id===c.id);return`${p?etiquetaVisible(p.nombre):'—'} ${c.porcentaje}%`;}).join(' · ')}</div>`:''}
           </div>
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-weight:700;font-size:14px;color:var(--red)">${fS(e.monto)}</span>
             ${!paid?`<button class="btn bp bxs" onclick="mkPaid(${e.id},'${mes}')">Pagar</button>`:`<button class="btn bgh bxs" onclick="mkPaid(${e.id},'${mes}',true)" style="color:var(--text3)">↩</button>`}
+            <button class="btn bgh bxs" onclick="openAdelantar(${e.id})" style="color:var(--m1)"><i class="ti ti-calendar-plus"></i></button>
             <button class="btn bgh bxs" onclick="editarFijo(${e.id})" style="color:var(--m1)"><i class="ti ti-pencil"></i></button>
             <button class="btn bgh bxs" onclick="elimEv(${e.id})" style="color:var(--red)"><i class="ti ti-trash"></i></button>
           </div>
@@ -1864,16 +2011,72 @@ function renderFijos(){
   if(!fijos.length)html='<div class="empty"><i class="ti ti-repeat"></i>Sin gastos fijos. Agrega uno arriba.</div>';
   document.getElementById('fijos-list').innerHTML=html;
 }
+function mesesAdelantadosPendientes(e){
+  const hoy=new Date();
+  const resultado=[];
+  for(let i=0;i<6;i++){
+    const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1);
+    const clave=d.toISOString().substring(0,7);
+    if(e.pm[clave]&&clave>getMes()){
+      resultado.push({clave,label:d.toLocaleDateString('es-PE',{month:'short',year:'numeric'})});
+    }
+  }
+  return resultado;
+}
+
+function openAdelantar(id){
+  const e=db.eventos.find(x=>x.id===id);if(!e)return;
+  openMod(`<div class="mt2"><span>📅 Adelantar pago — ${e.nombre}</span><button class="btn bgh" onclick="closeMN()"><i class="ti ti-x"></i></button></div>
+  <div style="font-size:13px;color:var(--text2);margin-bottom:12px">¿Cuántos meses quieres pagar de una vez?</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px" id="adel-opts">
+    ${[1,2,3,4,6].map(n=>`<button type="button" class="pb-btn" data-n="${n}" onclick="seleccionarAdelanto(${id},${n})">${n}</button>`).join('')}
+  </div>
+  <div id="adel-resumen" style="font-size:12.5px;color:var(--text2)"></div>
+  <button class="btn bp bfw" style="margin-top:14px" onclick="confirmarAdelanto(${id})" id="adel-confirmar" disabled><i class="ti ti-check"></i> Confirmar adelanto</button>`);
+}
+
+function seleccionarAdelanto(id,n){
+  const e=db.eventos.find(x=>x.id===id);if(!e)return;
+  document.querySelectorAll('#adel-opts .pb-btn').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.n)===n));
+  window._adelantoN=n;
+  const hoy=new Date();
+  const meses=[];
+  for(let i=1;i<=n;i++){
+    const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1);
+    meses.push(d.toLocaleDateString('es-PE',{month:'long',year:'numeric'}));
+  }
+  document.getElementById('adel-resumen').innerHTML=`Esto cubrirá: <strong>${meses.join(', ')}</strong><br>Total a pagar hoy: <strong>${fS(e.monto*n)}</strong>`;
+  document.getElementById('adel-confirmar').disabled=false;
+}
+
+function confirmarAdelanto(id){
+  const e=db.eventos.find(x=>x.id===id);if(!e)return;
+  const n=window._adelantoN;
+  if(!n){toast('Selecciona cuántos meses');return;}
+  const hoy=new Date();
+  for(let i=1;i<=n;i++){
+    const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1);
+    const clave=d.toISOString().substring(0,7);
+    e.pm[clave]=true;
+    const fechaMov=`${clave}-01`;
+    const respReal=(e.resp==='Ambas'||e.resp==='Compartido')?db.personas[0]?.nombre||'':e.resp;
+    db.movimientos.push({id:Date.now()+i,fecha:fechaMov,tipo:'gasto',persona:respReal,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Pago adelantado'});
+  }
+  window._adelantoN=null;
+  save();closeMN();renderFijos();renderCal();toast(`✓ ${n} mes(es) adelantado(s)`);
+}
 function mkPaid(id,mk,undo=false){
   const e=db.eventos.find(x=>x.id===id);if(!e)return;
   e.pm[mk]=!undo;
   if(!undo&&e.monto>0){
     const respReal=(e.resp==='Ambas'||e.resp==='Compartido')?db.personas[0]?.nombre||'':e.resp;
     db.movimientos.push({id:Date.now(),fecha:new Date().toISOString().split('T')[0],tipo:'gasto',persona:respReal,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Fijo registrado desde calendario'});
-    if(e.cat==='Aporte a Mamá'||e.aporteMama){
-      const receptora=db.personas[1]?.nombre||db.personas[0]?.nombre||'';
-      const emisora=db.personas[0]?.nombre||'';
-      db.movimientos.push({id:Date.now()+1,fecha:new Date().toISOString().split('T')[0],tipo:'ingreso',persona:receptora,categoria:`Aporte de ${emisora}`,subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:`Aporte recibido de ${emisora} (automático)`});
+    if(e.aporteA){
+      const dest=db.personas.find(p=>p.id===e.aporteA);
+      if(dest){
+        const emisora=respReal||db.personas[0]?.nombre||'';
+        db.movimientos.push({id:Date.now()+1,fecha:new Date().toISOString().split('T')[0],tipo:'ingreso',persona:dest.nombre,categoria:`Aporte de ${emisora}`,subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:`Aporte recibido de ${emisora} (automático)`});
+      }
     }
   }
   save();renderFijos();renderCal();toast(undo?'Desmarcado':'✓ Registrado');
