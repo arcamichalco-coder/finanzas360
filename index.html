@@ -845,7 +845,7 @@ function calcMes(mes){
   const deu=db.deudas.reduce((s,d)=>s+d.saldo,0);
   const pre=db.prestamos.reduce((s,p)=>s+p.saldo,0);
   const pat=(db.patrimonio_a||[]).reduce((s,a)=>s+a.valor,0)-(db.patrimonio_p||[]).reduce((s,p)=>s+p.valor,0);
-  const fijos=db.eventos.filter(e=>e.tipo==='fijo').reduce((s,e)=>s+e.monto,0);
+  const fijos=db.eventos.filter(e=>e.tipo==='fijo'&&!(e.adelantado&&e.adelantado[mes])).reduce((s,e)=>s+e.monto,0);
   const saldo=db.cuentas.reduce((s,c)=>s+c.saldo,0);
   const comprometido=deu+fijos;
   const disponible=Math.max(0,saldo-comprometido);
@@ -942,19 +942,25 @@ function go(id){
 
 function genNotifs(){
   const hoy=new Date(),dia=hoy.getDate(),mes=getMes(),ns=[];
-  db.eventos.filter(e=>e.tipo==='fijo'&&e.dia<=dia+3&&!e.pm[mes]).forEach(e=>{ns.push({tipo:'pago',t:`${e.nombre} vence pronto — Día ${e.dia}${e.monto?` · ${fS(e.monto)}`:''}`,icon:'💳',urgente:e.dia<=dia});});
-  db.serv_o.forEach(s=>{s.personas.filter(p=>!p.pm[mes]).forEach(p=>{ns.push({tipo:'cobro',t:`${p.nombre} no pagó ${s.nombre} — ${fS(p.monto)}`,icon:'📺',urgente:p.dia<=dia});});});
-  db.prestamos.filter(p=>p.saldo>0).forEach(p=>{ns.push({tipo:'cobro',t:`${p.deudor} te debe ${fS(p.saldo)}`,icon:'🤝',urgente:false});});
+  db.eventos.filter(e=>e.tipo==='fijo'&&e.dia<=dia+3&&!e.pm[mes]).forEach(e=>{ns.push({tipo:'pago',grupo:e.dia<=dia?'urgente':'pronto',t:`${e.nombre} vence pronto — Día ${e.dia}${e.monto?` · ${fS(e.monto)}`:''}`,icon:'💳',urgente:e.dia<=dia});});
+  db.serv_o.forEach(s=>{s.personas.filter(p=>!p.pm[mes]).forEach(p=>{ns.push({tipo:'cobro',grupo:'cobrar',t:`${p.nombre} no pagó ${s.nombre} — ${fS(p.monto)}`,icon:'📺',urgente:p.dia<=dia});});});
+  db.prestamos.filter(p=>p.saldo>0).forEach(p=>{ns.push({tipo:'cobro',grupo:'cobrar',t:`${p.deudor} te debe ${fS(p.saldo)}`,icon:'🤝',urgente:false});});
+  db.deudas.filter(d=>d.saldo>0).forEach(d=>{ns.push({tipo:'deuda',grupo:d.prioridad==='Alta'?'urgente':'pronto',t:`Debes a ${d.acreedor} — ${fS(d.saldo)} pendiente`,icon:'💰',urgente:d.prioridad==='Alta'});});
+  db.tareas.filter(t=>!t.done&&t.fecha&&t.fecha<hoy.toISOString().split('T')[0]).forEach(t=>{ns.push({tipo:'tarea',grupo:'urgente',t:`Tarea vencida: "${t.nombre}"`,icon:'📌',urgente:true});});
   if(ns.length)db.notifs=[...ns,...db.notifs.filter(n=>!n.urgente).slice(0,8)];
   const u=ns.filter(n=>n.urgente).length;
   const el=document.getElementById('nc');if(el){el.textContent=u>0?u:'';el.style.display=u>0?'':'none';}
 }
 function renderActividad(){
   genNotifs();
-  const u=db.notifs.filter(n=>n.urgente),p=db.notifs.filter(n=>!n.urgente);
+  const conGrupo=db.notifs.map(n=>n.grupo?n:{...n,grupo:n.urgente?'urgente':'pronto'});
+  const urgentes=conGrupo.filter(n=>n.grupo==='urgente');
+  const proximos=conGrupo.filter(n=>n.grupo==='pronto');
+  const cobrar=conGrupo.filter(n=>n.grupo==='cobrar');
   let html='';
-  if(u.length){html+=`<div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">🔴 URGENTE</div>`;html+=u.map(n=>`<div class="al al-e"><span style="font-size:18px">${n.icon}</span><span>${n.t}</span></div>`).join('');}
-  if(p.length){html+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin:10px 0 6px">📋 PRÓXIMAMENTE</div>`;html+=p.slice(0,10).map(n=>`<div class="al al-m"><span style="font-size:18px">${n.icon}</span><span>${n.t}</span></div>`).join('');}
+  if(urgentes.length){html+=`<div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px">🔴 URGENTE</div>`;html+=urgentes.map(n=>`<div class="al al-e"><span style="font-size:18px">${n.icon}</span><span>${n.t}</span></div>`).join('');}
+  if(proximos.length){html+=`<div style="font-size:12px;font-weight:700;color:var(--text2);margin:10px 0 6px">📋 PRÓXIMAMENTE</div>`;html+=proximos.slice(0,10).map(n=>`<div class="al al-m"><span style="font-size:18px">${n.icon}</span><span>${n.t}</span></div>`).join('');}
+  if(cobrar.length){html+=`<div style="font-size:12px;font-weight:700;color:var(--m1);margin:10px 0 6px">🤝 POR COBRAR</div>`;html+=cobrar.slice(0,10).map(n=>`<div class="al al-v"><span style="font-size:18px">${n.icon}</span><span>${n.t}</span></div>`).join('');}
   if(!html)html='<div class="empty"><i class="ti ti-bell-off"></i>Sin alertas activas ✨</div>';
   document.getElementById('act-content').innerHTML=html;
 }
@@ -2053,11 +2059,13 @@ function confirmarAdelanto(id){
   const e=db.eventos.find(x=>x.id===id);if(!e)return;
   const n=window._adelantoN;
   if(!n){toast('Selecciona cuántos meses');return;}
+  if(!e.adelantado)e.adelantado={};
   const hoy=new Date();
   for(let i=1;i<=n;i++){
     const d=new Date(hoy.getFullYear(),hoy.getMonth()+i,1);
     const clave=d.toISOString().substring(0,7);
     e.pm[clave]=true;
+    e.adelantado[clave]=true;
     const fechaMov=`${clave}-01`;
     const respReal=(e.resp==='Ambas'||e.resp==='Compartido')?db.personas[0]?.nombre||'':e.resp;
     db.movimientos.push({id:Date.now()+i,fecha:fechaMov,tipo:'gasto',persona:respReal,categoria:e.cat||'Gastos fijos',subcategoria:'',monto:e.monto,metodo:'Efectivo',pr:e.nombre,nt:'Pago adelantado'});
