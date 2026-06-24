@@ -790,22 +790,22 @@ function postInit(){
   if(niBtn)niBtn.innerHTML=`<i class="ti ti-brain"></i>${getNombreFuente()}`;
 }
 function initDef(){
-  if(!db.deudas.length)db.deudas=[{id:1,acreedor:'Tío 1',persona:'Camila',mi:500,saldo:500,prioridad:'Alta',nota:'',hist:[]},{id:2,acreedor:'Tío 2',persona:'Camila',mi:300,saldo:300,prioridad:'Media',nota:'',hist:[]}];
-  if(!db.metas.length)db.metas=[{id:1,nombre:'Operación ocular',persona:'Camila',costo:2000,ahorro:0,aporte:200,fecha:'',pr:'Alta',nota:''},{id:2,nombre:'Tablet',persona:'Camila',costo:800,ahorro:0,aporte:100,fecha:'',pr:'Media',nota:''},{id:3,nombre:'Fondo emergencia',persona:'Camila',costo:1500,ahorro:0,aporte:150,fecha:'',pr:'Alta',nota:''},{id:4,nombre:'Cama',persona:'Mamá',costo:600,ahorro:0,aporte:80,fecha:'',pr:'Media',nota:''}];
-  if(!db.fe.length)db.fe=[{persona:'Camila',monto:0,meta:1500},{persona:'Mamá',monto:0,meta:1000}];
+  if(!db.deudas.length)db.deudas=[{id:1,acreedor:'Tío 1',persona:'Participante 1',mi:500,saldo:500,prioridad:'Alta',nota:'',hist:[]},{id:2,acreedor:'Tío 2',persona:'Participante 1',mi:300,saldo:300,prioridad:'Media',nota:'',hist:[]}];
+  if(!db.metas.length)db.metas=[{id:1,nombre:'Operación ocular',persona:'Participante 1',costo:2000,ahorro:0,aporte:200,fecha:'',pr:'Alta',nota:''},{id:2,nombre:'Tablet',persona:'Participante 1',costo:800,ahorro:0,aporte:100,fecha:'',pr:'Media',nota:''},{id:3,nombre:'Fondo emergencia',persona:'Participante 1',costo:1500,ahorro:0,aporte:150,fecha:'',pr:'Alta',nota:''},{id:4,nombre:'Cama',persona:'Participante 2',costo:600,ahorro:0,aporte:80,fecha:'',pr:'Media',nota:''}];
+  if(!db.fe.length)db.fe=[{persona:'Participante 1',monto:0,meta:1500},{persona:'Participante 2',monto:0,meta:1000}];
   if(!db.eventos.length)db.eventos=[
-  {id:1,nombre:'Internet',tipo:'fijo',monto:35,dia:5,resp:'Camila',cat:'Internet',nota:'',pm:{},freq:'mensual'},
-  {id:2,nombre:'Celular',tipo:'fijo',monto:30,dia:5,resp:'Camila',cat:'Celular',nota:'',pm:{},freq:'mensual'},
-  {id:3,nombre:'Colegiatura',tipo:'fijo',monto:45,dia:5,resp:'Camila',cat:'Colegiatura',nota:'',pm:{},freq:'cada3'},
-  {id:4,nombre:'Alquiler',tipo:'fijo',monto:250,dia:9,resp:'Mamá',cat:'Alquiler hogar',nota:'',pm:{},freq:'mensual'},
-  {id:5,nombre:'Banco préstamo',tipo:'fijo',monto:225,dia:20,resp:'Mamá',cat:'Banco',nota:'',pm:{},freq:'mensual'},
+  {id:1,nombre:'Internet',tipo:'fijo',monto:35,dia:5,resp:'Participante 1',cat:'Internet',nota:'',pm:{},freq:'mensual'},
+  {id:2,nombre:'Celular',tipo:'fijo',monto:30,dia:5,resp:'Participante 1',cat:'Celular',nota:'',pm:{},freq:'mensual'},
+  {id:3,nombre:'Colegiatura',tipo:'fijo',monto:45,dia:5,resp:'Participante 1',cat:'Colegiatura',nota:'',pm:{},freq:'cada3'},
+  {id:4,nombre:'Alquiler',tipo:'fijo',monto:250,dia:9,resp:'Participante 2',cat:'Alquiler hogar',nota:'',pm:{},freq:'mensual'},
+  {id:5,nombre:'Banco préstamo',tipo:'fijo',monto:225,dia:20,resp:'Participante 2',cat:'Banco',nota:'',pm:{},freq:'mensual'},
   {id:6,nombre:'Luz',tipo:'fijo',monto:32,dia:20,resp:'Compartido',cat:'Servicios',nota:'',pm:{},freq:'mensual'},
-  {id:7,nombre:'Amazon',tipo:'fijo',monto:25,dia:18,resp:'Camila',cat:'Suscripciones',nota:'',pm:{},freq:'mensual'},
-  {id:8,nombre:'Gas',tipo:'fijo',monto:55,dia:20,resp:'Mamá',cat:'Servicios',nota:'',pm:{},freq:'cada2'},
-  {id:9,nombre:'Hera (baño)',tipo:'fijo',monto:60,dia:18,resp:'Camila',cat:'Mascota',nota:'',pm:{},freq:'cada3'},
-  {id:10,nombre:'Aporte a Mamá',tipo:'fijo',monto:113,dia:9,resp:'Camila',cat:'Aporte mensual',nota:'Para cubrir déficit del hogar',pm:{},freq:'mensual',aporteA:2},
+  {id:7,nombre:'Amazon',tipo:'fijo',monto:25,dia:18,resp:'Participante 1',cat:'Suscripciones',nota:'',pm:{},freq:'mensual',compartidoCon:[{id:2,porcentaje:50},{id:1,porcentaje:50}]},
+  {id:8,nombre:'Gas',tipo:'fijo',monto:55,dia:20,resp:'Participante 2',cat:'Servicios',nota:'',pm:{},freq:'cada2'},
+  {id:9,nombre:'Mascota',tipo:'fijo',monto:60,dia:18,resp:'Participante 1',cat:'Mascota',nota:'',pm:{},freq:'cada3'},
+  {id:10,nombre:'Aporte mensual al hogar',tipo:'fijo',monto:113,dia:9,resp:'Participante 1',cat:'Aporte mensual',nota:'Aporte de ejemplo entre participantes',pm:{},freq:'mensual',aporteA:2},
 ];
-  if(!db.personas.length)db.personas=[{id:1,nombre:'Camila',alias:'Yo',relacion:'Personal',tipo:'Familiar'},{id:2,nombre:'Mamá',alias:'Mamá',relacion:'Familiar',tipo:'Familiar'}];
+  if(!db.personas.length)db.personas=[{id:1,nombre:'Participante 1',alias:'Yo',relacion:'Personal',tipo:'Familiar',roles:['conviviente']},{id:2,nombre:'Participante 2',alias:'',relacion:'Conviviente',tipo:'Familiar',roles:['conviviente']}];
   if(!db.cuentas.length)db.cuentas=[{id:1,nombre:'Efectivo',saldo:0,tipo:'Efectivo'},{id:2,nombre:'Yape',saldo:0,tipo:'Digital'},{id:3,nombre:'BCP',saldo:0,tipo:'Banco'}];
   genNotifs();
 }
