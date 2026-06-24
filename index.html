@@ -2168,6 +2168,11 @@ function renderAI(){
     else msgs.push({c:'al-g',t:`✅ Tus gastos fijos son el <strong>${pctFijos.toFixed(0)}%</strong> de tus ingresos — manejable.`});
   }
 
+  const gastosConAdelanto=db.eventos.filter(e=>e.tipo==='fijo'&&e.adelantado&&Object.keys(e.adelantado).some(k=>e.adelantado[k]&&k>mes));
+  if(gastosConAdelanto.length>0){
+    msgs.push({c:'al-m',t:`📅 Tienes <strong>${gastosConAdelanto.length}</strong> gasto(s) fijo(s) ya adelantado(s) — ese dinero ya no cuenta como comprometido este mes.`});
+  }
+
   // Comparativa con mes anterior
   const ms=getLast6();const prevM=ms[ms.length-2];
   if(prevM){
@@ -2296,8 +2301,25 @@ function responder(){
     resp=`📋 Tus gastos fijos suman <strong>${fS(fijos)}</strong>/mes. ${ing>0?`Representan el ${(fijos/ing*100).toFixed(0)}% de tus ingresos.`:''}`;
   }
   else if(q.includes('internet')||q.includes('quién')||q.includes('quien')||q.includes('pagó')){
-    const pend=db.serv_o.flatMap(s=>s.personas.filter(p=>!p.pm[getMes()]).map(p=>`${p.nombre} (${s.nombre})`));
+    const pendServ=db.serv_o.flatMap(s=>s.personas.filter(p=>!p.pm[getMes()]).map(p=>`${p.nombre} (${s.nombre})`));
+    const pendCompartido=db.eventos.filter(e=>e.tipo==='fijo'&&e.compartidoCon&&e.compartidoCon.length).map(e=>{
+      const nombres=e.compartidoCon.map(c=>{const p=db.personas.find(x=>x.id===c.id);return p?etiquetaVisible(p.nombre):null;}).filter(Boolean);
+      return nombres.length?`${e.nombre} (compartido entre ${nombres.join(', ')})`:null;
+    }).filter(Boolean);
+    const pend=[...pendServ,...pendCompartido];
     resp=pend.length?`📺 Pendientes de pago: <strong>${pend.join(', ')}</strong>.`:'✅ Todos pagaron este mes.';
+  }
+  else if(q.includes('adelant')){
+    const conAdelanto=db.eventos.filter(e=>e.tipo==='fijo'&&e.adelantado&&Object.keys(e.adelantado).some(k=>e.adelantado[k]&&k>getMes()));
+    if(conAdelanto.length){
+      const detalle=conAdelanto.map(e=>{
+        const meses=mesesAdelantadosPendientes(e);
+        return meses.length?`${e.nombre} (cubierto hasta ${meses[meses.length-1].label})`:null;
+      }).filter(Boolean);
+      resp=`📅 Tienes <strong>${detalle.length}</strong> gasto(s) adelantado(s): ${detalle.join(', ')}.`;
+    }else{
+      resp='📅 No tienes ningún pago adelantado configurado actualmente.';
+    }
   }
   else{
     const num=inp.match(/(\d[\d.,]*)/);
